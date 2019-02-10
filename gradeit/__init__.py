@@ -17,5 +17,3 @@ elevation
 gradeit
     Combines the functionality of elevation and grade modules
 """
-
-from .gradeit import gradeit
