@@ -38,7 +38,7 @@ def get_grade(coordinates):
     # get each elevation value
     for coord in coordinates:
 
-        # TODO: make this an actual elevation value from the database
+        # TODO: make this an actual grade value from the database
         grade = float(randint(100, 100000)) / 100
         # append it to the elevations list
         grades += [grade]
