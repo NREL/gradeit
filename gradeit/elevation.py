@@ -2,34 +2,48 @@
 Module contains functionality associated with elevation profiles.
 
 Author: Cory Kennedy
-
-Credits: A number of the functions in this moduel are derived from
-	previous work by Eric Burton
+Date: Mar 2019
+Credits: A number of the raster database related functions in this module are
+	derived from previous work by Eric Burton (circa 2014)
 """
 
 import requests
 import numpy as np
 from json import loads
-from os import path
 from pathlib import Path
 from gdal import Open
 
-def get_elevation(coordinates):
+def get_elevation(coordinates, source='arnaud-server'):
     """
     A function that provides elevation values given coordinates
 
     Parameters:
-        nested lists/tuples that contain latitude and longitude floating-point
-        coordinates.
+    	coordinates:
+            nested lists/tuples that contain latitude and longitude floating-point
+            coordinates.
+        	
+	    ex:	Tuple of tuples of floats
+            	((xx.xxxxxx, xxx.xxxxxx), (xx.xxxxxx, xxx.xxxxxx))
 
-        ex:
-            Tuple of tuples of floats
-            ((xx.xxxxxx, xxx.xxxxxx), (xx.xxxxxx, xxx.xxxxxx))
+            	or
 
-            or
+		List of lists of floats
+		[[lat_1, lon_1], [lat_2, lon_2]]
 
-            List of lists of floats
-            [[lat_1, lon_1], [lat_2, lon_2]]
+	source:
+	    valid keywords are:
+		
+		'arnuad-server' (default):
+		    sources elevation values from a raster database stored on arnaud
+		or
+		'usgs-api'
+		    sources elevation from a point-query API hosted by USGS
+
+		NOTES: 	- Both sources are technically the same USGS 1/3 arc-second dataset.
+			- However, slight variations in returned elevation values are likely.
+			- Furthermore, there are performance differences between the sources.
+			- Generally, we recommend selecting the USGS API for smaller queries
+			  and arnaud for larger queries.
 
     Returns:
         A tuple containing floating-point elevation values.
@@ -38,20 +52,29 @@ def get_elevation(coordinates):
             Tuple of floats
             (xxxx.xx, elev_2, elev_3, ...)
     """
-    # TODO: make units in feet
+    # check source keyword argument
+    if source not in set('arnaud-server', 'usgs-api'):
+        error_msg = '''Invalid keyword argument for keyword 'source'
+	Valid arguments are: source='arnaud-server' or source='usgs-api'''
+        raise ValueError(error_msg)
 
-    elevations = []
+    if source == 'usgs-api':
+        # TODO: make units in feet
+        elevations = []
+        # get each elevation value from USGS API
+        for coord in coordinates:
+            # query USGS API and store resulting elevation
+            elev = usgs_api_elevation(coord)
+            # append elevation to the elevations list
+            elevations += [elev]
+        return tuple(elevations)
 
-    # get each elevation value from USGS API
-    for coord in coordinates:
+    if source == 'arnaud-server':
+        elevations = get_raster_elev_profile(coordinates)
+        return elevations
 
-        # query USGS API and store resulting elevation
-        elev = usgs_api_elevation(coord)
-        # append elevation to the elevations list
-        elevations += [elev]
 
-    return tuple(elevations)
-
+####### USGS API access function ######
 
 def usgs_api_elevation(coordinate):
     """
@@ -85,21 +108,17 @@ def usgs_api_elevation(coordinate):
     query = '{url}?x={lon}&y={lat}&units={units}&output={output}'.format(
             url=URL, lon=lon, lat=lat, units=UNITS, output=OUTPUT
             )
-
     response_json = requests.get(query)
-
     results = loads(response_json.text) # a dict containing the json data
-
-
     elev = results['USGS_Elevation_Point_Query_Service']\
                     ['Elevation_Query']\
                     ['Elevation']
-
-    # cast value to a float
     elev = float(elev)
 
     return elev
 
+
+###### Raster database access functions ######
 
 def get_raster_metadata_and_data(raster_path):
     """
@@ -114,24 +133,16 @@ def get_raster_metadata_and_data(raster_path):
     	a tuple containing the following metadata and data
     	(Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
-    data = Open(raster_path) # Open function from GDAL
+    data = Open(raster_path.as_posix()) # Open function from GDAL
     # if raster data returns as None, raise an exception
     # NOTE: returning NoneType values is GDAL's way of raising exceptions
     if data is None:
-        #print 'Grid Does not Exist'
-        #xOrigin = None
-        #yOrigin = None
-        #pixelWidth = None
-        #pixelHeight = None
-        #bands = None
-        #rows = None
-        #cols = None
-	if path.isfile(raster_path): # path from os library
-	    error_msg = "GDAL could not open the raster file."
-	else:
-	    error_msg = "The file path provided does not point\
-			    to a valid raster file."
-	raise Exception(error_msg)
+        if raster_path.is_file(): # Path from pathlib
+            error_msg = "GDAL could not open the raster file."
+        else:
+            error_msg = "The file path provided does not point to a valid raster file."
+        
+        raise Exception(error_msg)
 
     # otherwise, GDAL successfully opened the raster file, return the data
     else:
@@ -150,8 +161,7 @@ def get_raster_metadata_and_data(raster_path):
 
     return (xOrigin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
 
-
-def get_elev_data(grid_ref, lons, lats):
+def get_raster_elev_data(grid_ref, lats, lons):
     """
     A function that specifies the path to the raster database, calls
     get_raster_metadata_and_data(raster_path), processes the results
@@ -165,49 +175,46 @@ def get_elev_data(grid_ref, lons, lats):
     	a list of floats containing elevation values
     """
     elevation = []
-    
+   
     # path to arnaud's raster database
     db_path = Path("/backup/mbap_shared/NED_13/") # Path from pathlib lbrary
     # path from database top level down to raster file
-    sub_path = Path('grid' + grid_ref / 'grd' + grid_ref + '_13') # Path from pathlib
+    sub_path = Path() / 'grid' / grid_ref / ('grd' + grid_ref + '_13') # Path from pathlib
     # complete path
     raster_path = Path(db_path / sub_path / "w001001.adf") # Path from pathlib
-    #raster_path = 'E:\\DEM_Database\\NED_13\\grid\\' + grid_ref + '\\' + sub_path + '\\w001001.adf'
     
     # if the raster path doesn't get exist, throw an exception
-    if not path.exists(raster_path): # path from os library
-	error_msg = '''Invalid file path provided.
+    if not raster_path.exists(): # Path from pathlib
+        error_msg = '''Invalid file path provided.
 	'{path}' does not exist.'''.format(path=raster_path)
         raise Exception(error_msg)
 
     # otherwise, get the raster metadata and data
     else:
-	# TODO place this function call in a try-catch
         (xOrigin, yOrigin, pixelWidth, pixelHeight,\
 	bands, rows, cols, data) = get_raster_metadata_and_data(raster_path)
         xOffset = [int((v - xOrigin) / pixelWidth) if v < 0.0 else 'nan' for v in np.float64(lons)]
         yOffset = [int((v - yOrigin) / pixelHeight) if v > 0.0 else 'nan' for v in np.float64(lats)]
         
-	for val in range(len(lons)):
-	    if xOffset[val] == 'nan':
+        for val in range(len(lons)):
+            if xOffset[val] == 'nan':
                 #print 'passed'
-                elevation.append(np.nan)
+                elevation += [np.nan]
             else:
 
                 for i in range(bands):
                     band = data.GetRasterBand(i+1) # 1-based index
                     raster_data = band.ReadAsArray(xOffset[val], yOffset[val], 1, 1)
                     if raster_data is not None:
-                        ele = float(raster_data[0,0]) * 3.28084
-                        elevation.append(ele)
+                        elev_ft = float(raster_data[0,0]) * 3.28084
+                        elevation += [elev_ft]
                     else:
                         #print 'passed'
-                        elevation.append(np.nan)
+                        elevation += [np.nan]
         del data
     return elevation
 
-
-def build_grid_refs(lons, lats):
+def build_grid_refs(lats, lons):
     """
     This function takes latitude and longitude values and returns
     grid reference IDs that are used as keys for raster grid files
@@ -221,43 +228,44 @@ def build_grid_refs(lons, lats):
     grid_refs = []
     for i in range(len(lons)):
         if lats[i] > 0.0 and lons[i] < 0.0:
-            val = str(int(abs(lons[i])))+1)
+            val = str(int(abs(lons[i]))+1)
             if len(val) < 3:
                 val = '0' + val
-            grid_refs.append('n' + str(int(abs(lats[i]))+1) + 'w' + val)
+            grid_refs += ['n' + str(int(abs(lats[i]))+1) + 'w' + val]
         else:
-            grid_refs.append('0')
-    return np.array(grid_refs)
+            grid_refs += ['0']
+    return grid_refs
 
-
-def return_elevation_profiles(lats, lons):
+def get_raster_elev_profile(coordinates):
     """
-    This function takes latitude and longitude values and returns an
-    elevation profile from the raster database on the Arnaud server.
+    This function takes latitude and longitude values, of coordinate pairs
+    and returns an elevation profile from the raster database on the
+    arnaud server.
 
     Parameters:
-    	Two iterables (list, tuple, or numpy array.) The first containing
-	latitude float values, and the second longitude float values.
+    	an iterable of iterables (list of lists, tuple of tuples, etc.)
+	ex:    [[lat1, lon1], [lat2, lon2]]
     Return value:
-    	A numpy array of elevation float values from the raster database.
+    	A list of elevation float values from the raster database.
     """
-    if type(lons) == list or type(lons) == tuple:
-        lons = np.array(lons)
-        lats = np.array(lats)
-    
+    lats = [coord[0] for coord in coordinates]
+    lons = [coord[1] for coord in coordinates]
     elevation_full = []
-    ts_full = []
-    grid_refs = build_grid_refs(lons, lats)
+    ts_full = [] # track query order
+    grid_refs = build_grid_refs(lats, lons)
     unique_grid_refs = list(set(grid_refs))
     row_col = range(0, len(lons))
 
-    for ref in unique_grid_refs:
-        ts = row_col[(grid_refs == ref)]
-        elevation = get_elev_data(ref, lons[(grid_refs == ref)], lats[(grid_refs == ref)])
-        elevation_full += list(elevation)
-        ts_full += list(ts)
+    # for each unique grid reference, find associated order, lat, lon, and elevation
+    for uniq_ref in unique_grid_refs:
+        ts = [row_col[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        grid_lats = [lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        grid_lons = [lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        elevation = get_raster_elev_data(uniq_ref, grid_lats, grid_lons)
+        elevation_full += elevation
+        ts_full += ts
 
+    # reorder the elevation values to match the order of the query coordinates
     ts_full, elevation_full = [list(x) for x in zip(*sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0]))]
-    elevation_full = np.array(elevation_full)
     
     return elevation_full
