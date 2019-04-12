@@ -13,7 +13,7 @@ from json import loads
 from pathlib import Path
 from gdal import Open
 
-def get_elevation(coordinates, source='arnaud-server'):
+def get_elevation(coordinates, source='usgs-api'):
     """
     A function that provides elevation values given coordinates
 
@@ -33,11 +33,11 @@ def get_elevation(coordinates, source='arnaud-server'):
 	source:
 	    valid keywords are:
 		
-		'arnuad-server' (default):
-		    sources elevation values from a raster database stored on arnaud
-		or
-		'usgs-api'
+		'usgs-api' (default):
 		    sources elevation from a point-query API hosted by USGS
+		or
+		'arnuad-server':
+		    sources elevation values from a raster database stored on arnaud
 
 		NOTES: 	- Both sources are technically the same USGS 1/3 arc-second dataset.
 			- However, slight variations in returned elevation values are likely.
@@ -53,7 +53,7 @@ def get_elevation(coordinates, source='arnaud-server'):
             (xxxx.xx, elev_2, elev_3, ...)
     """
     # check source keyword argument
-    if source not in set('arnaud-server', 'usgs-api'):
+    if source not in set(['arnaud-server', 'usgs-api']):
         error_msg = '''Invalid keyword argument for keyword 'source'
 	Valid arguments are: source='arnaud-server' or source='usgs-api'''
         raise ValueError(error_msg)
