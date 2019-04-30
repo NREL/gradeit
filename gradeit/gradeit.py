@@ -1,7 +1,7 @@
 """Module contains the primary functionality of GradeIT."""
 
-import elevation
-import grade
+from .elevation import get_elevation
+from .grade import get_grade
 
 def gradeit(coordinates, source='usgs-api'):
     """
@@ -46,10 +46,10 @@ def gradeit(coordinates, source='usgs-api'):
 			    }
     """
     # get elevation values
-    elev_tuple = elevation.get_elevation(coordinates, source=source)
+    elev_tuple = get_elevation(coordinates, source=source)
      
     # get grade values
-    grade_tuple = grade.get_grade(coordinates)
+    grade_tuple = get_grade(coordinates)
 
     # place both tuples in a dictionary
     gradeit_dict = {
