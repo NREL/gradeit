@@ -296,9 +296,9 @@ def elevation_filter(pnts):
     for i in range(len(wav_lst)):
         wav_lst[i] = while_accept_val_lst[func_class[i]]
 
-    dist_ft = 5280.0*integrate.cumtrapz(spd_mph, x=(t_s/3600.0) , initial=0)
+    dist_ft = 5280.0*integrate.cumtrapz(speed_mph, x=(t_s/3600.0) , initial=0)
     ## Down-sample the raw data at uniformly spaced points (by distance)
-    dist_ft_uni, elev_ft_uni, func_class_uni, wav_lst_uni = get_uniform_data( dist_ft, elev_ft, func_class, wav_lst, bin_size_ft )
+    dist_ft_uni, elev_ft_uni, func_class_uni, wav_lst_uni = get_uniform_data( dist_ft, elevation_ft, func_class, wav_lst, bin_size_ft )
 
     ## Smooth the elevation profile
     elev_ft_uni_new, elev_ft_uni_new_adj = smoothing_filter(elev_ft_uni, func_class_uni, window_size_list, bin_size_ft)
@@ -398,15 +398,15 @@ def smoothing_filter(*args):
     bin_size_ft = args[3]
 
     ### hold initial and final values at start and end of arrays
-    buffer_data0 = np.asarray([speed[0]]*((max(window_cnt_lst)-1)/2))
-    buffer_data1 = np.asarray([speed[-1]]*((max(window_cnt_lst)-1)/2))
+    buffer_data0 = np.asarray([speed[0]]*int((max(window_cnt_lst)-1)/2))
+    buffer_data1 = np.asarray([speed[-1]]*int((max(window_cnt_lst)-1)/2))
     speed = np.insert(speed, [0]*len(buffer_data0), buffer_data0)
     speed = np.append(speed, buffer_data1)
 
     speed_adjustment = np.zeros( len(speed) )
 
-    buffer_data0 = np.asarray([fc_lst[0]]*((max(window_cnt_lst)-1)/2))
-    buffer_data1 = np.asarray([fc_lst[-1]]*((max(window_cnt_lst)-1)/2))
+    buffer_data0 = np.asarray([fc_lst[0]]*int((max(window_cnt_lst)-1)/2))
+    buffer_data1 = np.asarray([fc_lst[-1]]*int((max(window_cnt_lst)-1)/2))
     fc_lst = np.insert(fc_lst, [0]*len(buffer_data0), buffer_data0)
     fc_lst = np.append(fc_lst, buffer_data1)
 
@@ -414,7 +414,7 @@ def smoothing_filter(*args):
     fc_lst_diff = np.diff(fc_lst)
     interval_end = np.asarray(mp.find(fc_lst_diff is not 0))
     interval_start = interval_end+1
-    interval_end = np.append(interval_end, len(fc_lst)-1-(max(window_cnt_lst)-1)/2)
+    interval_end = np.append(interval_end, len(fc_lst)-1-int(max(window_cnt_lst)-1)/2)
     interval_start = np.insert(interval_start, 0, (max(window_cnt_lst)-1)/2)
 
     for fa in range(len(interval_start)):
@@ -433,7 +433,7 @@ def smoothing_filter(*args):
 
         # Determine the Savitsky Golay Filter Coefficients assuming 3 order
         order_range = range(3+1)
-        b = np.mat([[k**i for i in order_range] for k in range(-window/2, window/2+1)])
+        b = np.mat([[k**i for i in order_range] for k in range(int(-1*window[0]/2), int(window[0]/2+1))])
         m = np.linalg.pinv(b).A[0]
 
         # perform the SG convolution on the speed data

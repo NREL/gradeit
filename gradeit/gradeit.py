@@ -72,10 +72,10 @@ def gradeit(coordinates=None, vehicle_trip_data=None, elevation_source='usgs-api
     # process a vehicle-trip-data-based query if vehicle data is provided
     elif vehicle_trip_data is not None:
         # if elevation has not been provided calculate it
-        if vehicle_trip_data['elev_ft'] is None:
+        if not 'elev_ft' in vehicle_trip_data:
             coords = list(zip(vehicle_trip_data['lat'], vehicle_trip_data['lon']))
-            vehicle_trip_data['elev_ft'] = get_elevation(coordinates=coords,
-		                                        elevation_source=elevation_source)
+            vehicle_trip_data['elev_ft'] = get_elevation(coords,
+                                                    source=elevation_source)
 
 	# TODO: refactor elevation_filter function to remove responsibility for grade calculations
 	# get the filtered elevation and grade from elevation_filter
