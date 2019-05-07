@@ -1,0 +1,5 @@
+name: gradeit
+channels:
+  - defaults
+prefix: /home/ckennedy/.conda/envs/gradeit
+
