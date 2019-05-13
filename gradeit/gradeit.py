@@ -94,11 +94,12 @@ def gradeit(coordinates=None, vehicle_trip_data=None, elevation_source='usgs-api
         elev_tuple = get_elevation(coordinates, source=elevation_source)
      
         # get grade values
-        grade_tuple = get_grade(elev_tuple, coordinates=coordinates)
+        distance_tuple, grade_tuple = get_grade(elev_tuple, coordinates=coordinates)
 
         # place both tuples in a dictionary
         gradeit_dict = {
                     'elevation (unfiltered)' : elev_tuple,
+                    'distance (feet)':distance_tuple,
                     'grade (unfiltered)' : grade_tuple,
 		    'source' : elevation_source,
                     }

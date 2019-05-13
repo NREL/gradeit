@@ -24,7 +24,7 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
     if coordinates is not None and distances is None:
         distances = get_distances(coordinates)
 
-    d_dist = np.diff(distances) # distances is an iterable of distances in feet
+    d_dist = distances # distances is an iterable of distances in feet
     d_elev = np.diff(elev_ft_arr)
     grade = d_elev / d_dist
     grade = np.insert(grade, 0, 0)
@@ -33,12 +33,12 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
         if np.isinf(grade[a+1]) or np.isnan(grade[a+1]):
             grade[a+1] = grade[a]
 
-    return tuple(grade)
+    return tuple(d_dist), tuple(grade)
 
 def get_distances(coordinates):
     FT_PER_KM = 3280.84
     # place a zero up front
-    distances = [0]
+    distances = []
     i = 1
     while i < len(coordinates):
         lat1 = coordinates[i-1][0]
