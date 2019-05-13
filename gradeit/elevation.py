@@ -444,7 +444,8 @@ def smoothing_filter(*args):
         speed_sub = np.convolve(binomial_coefficients, np.r_[ speed_sub0[0:int(window/2)] , speed_sub , speed_sub0[len(speed_sub0)-int(window/2):] ], mode = 'valid')
 
         ### insert filtered speed subsegment back into complete array
-        speed[interval_start[fa]:interval_end[fa]+1] = np.copy(speed_sub)
+        print(interval_start, interval_end, speed_sub)
+        speed[int(interval_start[fa]):int(interval_end[fa]+1)] = np.copy(speed_sub)
         speed_adjustment[int(interval_start[fa]):int(interval_end[fa]+1)] = speed_sub0[int(window/2):int(-window/2)] - speed_sub
 
     ### adjust elevation at intersection of smoothed segments

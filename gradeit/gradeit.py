@@ -101,7 +101,7 @@ def gradeit(coordinates=None, vehicle_trip_data=None, elevation_source='usgs-api
                     'elevation (unfiltered)' : elev_tuple,
                     'distance (feet)':distance_tuple,
                     'grade (unfiltered)' : grade_tuple,
-		    'source' : elevation_source,
+                    'source' : elevation_source,
                     }
 
     return gradeit_dict
