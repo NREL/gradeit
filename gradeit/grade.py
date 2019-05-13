@@ -5,30 +5,6 @@ from numpy.random import randint
 import numpy as np
 from math import radians, degrees, cos, sin, asin, atan2, sqrt
 
-def get_grade(coordinates):
-    """
-    A function that provides road grade values given coordinates
-
-    Parameters:
-        nested lists/tuples that contain latitude and longitude floating-point
-        coordinates.
-
-        ex:
-            Tuple of tuples of floats
-            ((xx.xxxxxx, xxx.xxxxxx), (xx.xxxxxx, xxx.xxxxxx))
-
-            or
-
-            List of lists of floats
-            [[lat_1, lon_1], [lat_2, lon_2]]
-
-    Returns:
-        A tuple containing floating-point grade values.
-
-        ex:
-            Tuple of floats
-            (xxxx.xx, elev_2, elev_3, ...)
-    """
 def get_grade(elev_ft_arr, coordinates=None, distances=None):
     # TODO: make units in %/100
 
