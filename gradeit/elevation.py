@@ -295,8 +295,10 @@ def elevation_filter(pnts):
     # run SavGol filter
     elev_linear_sg = signal.savgol_filter(elev_linear, window_length=17, polyorder=3)
     
+    # return grade values
     filter_grade = get_grade(elev_linear_sg, distances = np.diff(xnew))[1]
+    unfilter_grade = get_grade(pnts['elev_ft'], distances = np.diff(cuml_dist))[1]
     
-    return tuple(elev_linear_sg), tuple(filter_grade)
+    return tuple(elev_linear_sg), tuple(filter_grade), tuple(xnew), tuple(unfilter_grade), tuple(cuml_dist)
     
     

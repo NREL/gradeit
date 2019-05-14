@@ -79,12 +79,15 @@ def gradeit(coordinates=None, vehicle_trip_data=None, elevation_source='usgs-api
 
 	# TODO: refactor elevation_filter function to remove responsibility for grade calculations
 	# get the filtered elevation and grade from elevation_filter
-        filtered_elev_tuple, filtered_grade_tuple = elevation_filter(vehicle_trip_data)
+        filtered_elev_tuple, filtered_grade_tuple, filtered_cuml_dist, unfiltered_grade_tuple, unfiltered_cuml_dist = elevation_filter(vehicle_trip_data)
 
         gradeit_dict = {
 		        'elevation (unfiltered)' : vehicle_trip_data['elev_ft'],
 		        'elevation (filtered)' : filtered_elev_tuple,
 			'grade (filtered)' : filtered_grade_tuple,
+            'grade (unfiltered)' : unfiltered_grade_tuple,
+            'distance (filtered)' : filtered_cuml_dist,
+            'distance (unfiltered)' : unfiltered_cuml_dist,
 			'source' : elevation_source
 			}
 
