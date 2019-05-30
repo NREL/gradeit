@@ -22,7 +22,7 @@ import warnings
 warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
 
-def get_elevation(coordinates, source='usgs-api'):
+def get_elevation(coordinates_df, lat_col, lon_col, source='usgs-api'):
     """
     A function that provides elevation values given coordinates
 
@@ -62,14 +62,17 @@ def get_elevation(coordinates, source='usgs-api'):
             (xxxx.xx, elev_2, elev_3, ...)
     """
     # check source keyword argument
-    if source not in set(['arnaud-server', 'usgs-api']):
+    if source not in ['arnaud-server', 'usgs-api']:
         error_msg = '''Invalid keyword argument for keyword 'source'
 	Valid arguments are: source='arnaud-server' or source='usgs-api'''
         raise ValueError(error_msg)
 
+    coordinates = list(zip(coordinates_df[lat_col], 
+                           coordinates_df[lon_col]))
+        
     if source == 'usgs-api':
         elevations = []
-        # get each elevation value from USGS API
+        # get each elevation value from USGS API        
         for coord in coordinates:
             # query USGS API and store resulting elevation
             elev = usgs_api_elevation(coord)
