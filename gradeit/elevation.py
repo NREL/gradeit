@@ -4,7 +4,7 @@ Module contains functionality associated with elevation profiles.
 Author: Cory Kennedy
 Date: Mar 2019
 Credits: A number of the raster database related functions in this module are
-	derived from previous work by Eric Burton (circa 2014)
+	derived from previous work by Evan Burton (circa 2014)
 """
 
 import requests

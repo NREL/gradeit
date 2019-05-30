@@ -35,8 +35,18 @@ class ElevTest(unittest.TestCase):
                                 lat_col = 'lat', 
                                 lon_col = 'lon',
                                 source = 'usgs-api')
-
-        self.assertEqual(str(elev), '(7048.15, 7015.69, 7157.89, 7004.84, 6921.27, 6840.03, 6696.7, 6735.26, 6554.42, 6445.5)')
+    
+        i70_expected_out = '(7048.15, 7015.69, 7157.89, 7004.84, 6921.27, 6840.03, 6696.7, 6735.26, 6554.42, 6445.5)'
+        self.assertEqual(str(elev), i70_expected_out)
+        
+    def test_get_raster_elev_profile(self):
+        coords = list(zip(self.data.lat, self.data.lon))
+        elev = elevation.get_raster_elev_profile(coords)
+        
+        i70_expected_out = '[7051.126700732422, 7019.6391271875, 7166.562447382812, 6999.898018144531, 6919.229083066406, 6827.498526796875, 6672.75637855957, 6740.378447832031, 6551.383320751953, 6451.975711020507]'
+        
+        self.assertEqual(str(elev), i70_expected_out)
+        
         
         
         
