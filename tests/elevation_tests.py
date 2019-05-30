@@ -31,10 +31,12 @@ class ElevTest(unittest.TestCase):
         self.assertEqual(elev, 6445.5)
         
     def test_get_elevation_usgs(self):
-        print(elevation.get_elevation(self.data, 
+        elev = elevation.get_elevation(self.data, 
                                 lat_col = 'lat', 
                                 lon_col = 'lon',
-                                source = 'usgs-api'))
+                                source = 'usgs-api')
+
+        self.assertEqual(str(elev), '(7048.15, 7015.69, 7157.89, 7004.84, 6921.27, 6840.03, 6696.7, 6735.26, 6554.42, 6445.5)')
         
         
         
