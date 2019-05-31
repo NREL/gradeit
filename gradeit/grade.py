@@ -49,7 +49,7 @@ def get_distances(coordinates):
         distances += [dist_ft]
         i += 1
 
-    return np.array(distances)
+    return distances
 
 def haversine(lat1, lon1, lat2, lon2, get_bearing=False):
     """ 
