@@ -22,7 +22,7 @@ import warnings
 warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
 
-def get_elevation(coordinates_df, lat_col, lon_col, source='usgs-api'):
+def get_elevation(coordinates, source='usgs-api'):
     """
     A function that provides elevation values given coordinates
 
@@ -67,8 +67,8 @@ def get_elevation(coordinates_df, lat_col, lon_col, source='usgs-api'):
 	Valid arguments are: source='arnaud-server' or source='usgs-api'''
         raise ValueError(error_msg)
 
-    coordinates = list(zip(coordinates_df[lat_col], 
-                           coordinates_df[lon_col]))
+    # coordinates = list(zip(coordinates_df[lat_col], 
+    #                        coordinates_df[lon_col]))
         
     if source == 'usgs-api':
         elevations = []

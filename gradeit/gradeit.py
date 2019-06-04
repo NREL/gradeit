@@ -23,7 +23,17 @@ def gradeit(df = None, lat_col = 'lat', lon_col = 'lon', filtering = False, sour
         
         distance_ft, grade_dec = get_grade(tuple(df['elevation_ft'].values), coordinates=coordinates)
         
-        df['distance_ft'] = distance_ft
+        df['distance_ft'] = [0] + list(distance_ft)
+        
+        df['grade_dec'] = grade_dec
+
+
+    if filtering == True:
+        df['elevation_ft'] = get_elevation(coordinates, source=source)
+        
+        distance_ft, grade_dec = get_grade(tuple(df['elevation_ft'].values), coordinates=coordinates)
+        
+        df['distance_ft'] = [0] + list(distance_ft)
         
         df['grade_dec'] = grade_dec
         
