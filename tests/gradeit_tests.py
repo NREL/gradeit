@@ -13,7 +13,7 @@ import pandas as pd
 
 from gradeit import gradeit
 
-class GradeitTest(unittest.TestCase):
+class GradeitTestCoords(unittest.TestCase):
 
     # Our user has GPS data along I-70 that they would like to append elevation
     # and grade information to
@@ -57,6 +57,19 @@ class GradeitTest(unittest.TestCase):
        
         pd.testing.assert_frame_equal(self.data, self.check_raster_df)
         
+
+
+class GradeitTestDriveCycles(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_usgs_api_filter(self):
+        pass
+
+
 
 if __name__ == '__main__':
     unittest.main(warnings='ignore') 
