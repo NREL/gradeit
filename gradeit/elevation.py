@@ -1,10 +1,9 @@
 """
-Module contains functionality associated with elevation profiles.
+Append elevation to spatial data from a variety of sources including the USGS 
+public API, and a local version of the same USGS 1/3 arc-second data in the 
+form of a raster database.
 
-Author: Cory Kennedy
-Date: Mar 2019
-Credits: A number of the raster database related functions in this module are
-	derived from previous work by Evan Burton (circa 2014)
+Contributors: Jacob Holden, Cory Kennedy, Eric Wood, Evan Burton
 """
 
 import requests
@@ -22,97 +21,32 @@ import warnings
 warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
 
-def get_elevation(coordinates, source='usgs-api'):
+
+def usgs_api(df, lat='lat', lon='lon', filter=False):
     """
-    A function that provides elevation values given coordinates
+    Look up elevation for every location in a dataframe by latitude, longitude
+    coordinates. The source for the data is the public USGS API, which compiles
+    and serves data from the 1/3 arc-second Digital Elevation Model.
 
-    Parameters:
-    	coordinates:
-            nested lists/tuples that contain latitude and longitude floating-point
-            coordinates.
-        	
-	    ex:	Tuple of tuples of floats
-            	((xx.xxxxxx, xxx.xxxxxx), (xx.xxxxxx, xxx.xxxxxx))
-
-            	or
-
-		List of lists of floats
-		[[lat_1, lon_1], [lat_2, lon_2]]
-
-	source:
-	    valid keywords are:
-		
-		'usgs-api' (default):
-		    sources elevation from a point-query API hosted by USGS
-		or
-		'arnuad-server':
-		    sources elevation values from a raster database stored on arnaud
-
-		NOTES: 	- Both sources are technically the same USGS 1/3 arc-second dataset.
-			- However, slight variations in returned elevation values are likely.
-			- Furthermore, there are performance differences between the sources.
-			- Generally, we recommend selecting the USGS API for smaller queries
-			  and arnaud for larger queries.
-
-    Returns:
-        A tuple containing floating-point elevation values.
-
-        ex:
-            Tuple of floats
-            (xxxx.xx, elev_2, elev_3, ...)
+    More information is available at https://nationalmap.gov/epqs/
     """
-    # check source keyword argument
-    if source not in ['arnaud-server', 'usgs-api']:
-        error_msg = '''Invalid keyword argument for keyword 'source'
-	Valid arguments are: source='arnaud-server' or source='usgs-api'''
-        raise ValueError(error_msg)
 
-    # coordinates = list(zip(coordinates_df[lat_col], 
-    #                        coordinates_df[lon_col]))
-        
-    if source == 'usgs-api':
-        elevations = []
-        # get each elevation value from USGS API        
-        for coord in coordinates:
-            # query USGS API and store resulting elevation
-            elev = usgs_api_elevation(coord)
-            # append elevation to the elevations list
-            elevations += [elev]
-        return tuple(elevations)
+    df['elevation_ft'] = df.apply(lambda row: usgs_query_call(row[lat],row[lon]), axis=1)
 
-    if source == 'arnaud-server':
-        elevations = get_raster_elev_profile(coordinates)
-        return elevations
+    if filter == True:
+        df = _elevation_filter(df, lat=lat, lon=lon)
+
+    return df
 
 
-####### USGS API access function ######
-
-def usgs_api_elevation(coordinate):
+def usgs_query_call(lat,lon):
     """
-    A function that queries the USGS DEM API (https://nationalmap.gov/epqs/) and
-    returns the elevation value at the provided latitude/longitude coordinate.
-
-    Parameters:
-        List/Tuple that contains latitude and longitude floating-point
-        values. These two values comprise a coordinate
-
-        ex:
-            Tuple of floats
-            (xx.xxxxxx, xxx.xxxxxx)
-
-            or
-
-            List of floats
-            [lat_1, lon_1]
-
-    Returns:
-        A float containing a floating-point elevation value.
+    Build and run the query to the USGS API endpoint
     """
-    # TODO: handle invalid elevation values (-1000000)
 
     URL = 'https://nationalmap.gov/epqs/pqs.php'
-    lat = str(coordinate[0])
-    lon = str(coordinate[1])
+    lat = str(lat)
+    lon = str(lon)
     UNITS = 'feet'
     OUTPUT = 'json'
 
@@ -129,7 +63,79 @@ def usgs_api_elevation(coordinate):
     return elev
 
 
-###### Raster database access functions ######
+def _elevation_filter(df, lat='lat', lon='lon'):
+   
+    # resample uniformly
+    coordinates = list(zip(df[lat], df[lon]))
+    distances = get_distances(coordinates)
+    cuml_dist = np.append(0,np.cumsum(distances))
+    
+    # linear interpolation
+    flinear = sp.interpolate.interp1d(cuml_dist, df['elevation_ft'])
+
+    xnew = np.linspace(cuml_dist[0], cuml_dist[-1], len(cuml_dist))
+    elev_linear = flinear(xnew)
+    
+    # run SavGol filter
+    elev_linear_sg = signal.savgol_filter(elev_linear, window_length=17, polyorder=3)
+
+    df['cumulative_original_distance_df'] = np.append(0,np.cumsum(distances))
+    df['cumulative_uniform_distance_ft'] = cuml_dist
+    df['elevation_ft_filtered'] = elev_linear_sg
+    
+    return df
+
+
+def usgs_local_data(df, lat='lat', lon='lon', filter=False):
+    """
+    Look up elevation for every location in a dataframe by latitude, longitude 
+    coordinates. The source data is a locally downloaded raster database 
+    containing the USGS 1/3 arc-second Digital Elevation Model.
+    """
+
+    coordinates = list(zip(df[lat], df[lon]))
+    df['elevation_ft'] = get_raster_elev_profile(coordinates)
+
+    if filter == True:
+        df = _elevation_filter(df, lat=lat, lon=lon)
+
+    return df
+
+
+def get_raster_elev_profile(coordinates):
+    """
+    This function takes latitude and longitude values, of coordinate pairs
+    and returns an elevation profile from the raster database on the
+    arnaud server.
+
+    Parameters:
+    	an iterable of iterables (list of lists, tuple of tuples, etc.)
+	ex:    [[lat1, lon1], [lat2, lon2]]
+    Return value:
+    	A list of elevation float values from the raster database.
+    """
+    lats = [coord[0] for coord in coordinates]
+    lons = [coord[1] for coord in coordinates]
+    elevation_full = []
+    ts_full = [] # track query order
+    grid_refs = build_grid_refs(lats, lons)
+    unique_grid_refs = list(set(grid_refs))
+    row_col = range(0, len(lons))
+
+    # for each unique grid reference, find associated order, lat, lon, and elevation
+    for uniq_ref in unique_grid_refs:
+        ts = [row_col[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        grid_lats = [lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        grid_lons = [lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        elevation = get_raster_elev_data(uniq_ref, grid_lats, grid_lons)
+        elevation_full += elevation
+        ts_full += ts
+
+    # reorder the elevation values to match the order of the query coordinates
+    ts_full, elevation_full = [list(x) for x in zip(*sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0]))]
+    
+    return elevation_full
+
 
 def get_raster_metadata_and_data(raster_path):
     """
@@ -246,62 +252,7 @@ def build_grid_refs(lats, lons):
         else:
             grid_refs += ['0']
     return grid_refs
-
-def get_raster_elev_profile(coordinates):
-    """
-    This function takes latitude and longitude values, of coordinate pairs
-    and returns an elevation profile from the raster database on the
-    arnaud server.
-
-    Parameters:
-    	an iterable of iterables (list of lists, tuple of tuples, etc.)
-	ex:    [[lat1, lon1], [lat2, lon2]]
-    Return value:
-    	A list of elevation float values from the raster database.
-    """
-    lats = [coord[0] for coord in coordinates]
-    lons = [coord[1] for coord in coordinates]
-    elevation_full = []
-    ts_full = [] # track query order
-    grid_refs = build_grid_refs(lats, lons)
-    unique_grid_refs = list(set(grid_refs))
-    row_col = range(0, len(lons))
-
-    # for each unique grid reference, find associated order, lat, lon, and elevation
-    for uniq_ref in unique_grid_refs:
-        ts = [row_col[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
-        grid_lats = [lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
-        grid_lons = [lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
-        elevation = get_raster_elev_data(uniq_ref, grid_lats, grid_lons)
-        elevation_full += elevation
-        ts_full += ts
-
-    # reorder the elevation values to match the order of the query coordinates
-    ts_full, elevation_full = [list(x) for x in zip(*sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0]))]
     
-    return elevation_full
-    
-def elevation_filter(pnts):
-   
-    # resample uniformly
-    if 'distance (feet)' in pnts.keys():
-        cuml_dist = np.append(0,np.cumsum(pnts['distance (feet)']))
-    else:
-        coordinates = list(zip(pnts['lat'],pnts['lon']))
-        cuml_dist = np.append(0,np.cumsum(get_distances(coordinates)))
-        
-    flinear = sp.interpolate.interp1d(cuml_dist, pnts['elev_ft'] )
 
-    xnew = np.linspace(cuml_dist[0], cuml_dist[-1], len(cuml_dist))
-    elev_linear = flinear(xnew)
-    
-    # run SavGol filter
-    elev_linear_sg = signal.savgol_filter(elev_linear, window_length=17, polyorder=3)
-    
-    # return grade values
-    filter_grade = get_grade(elev_linear_sg, distances = np.diff(xnew))[1]
-    unfilter_grade = get_grade(pnts['elev_ft'], distances = np.diff(cuml_dist))[1]
-    
-    return tuple(elev_linear_sg), tuple(filter_grade), tuple(xnew), tuple(unfilter_grade), tuple(cuml_dist)
     
     
