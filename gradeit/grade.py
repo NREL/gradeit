@@ -33,7 +33,7 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
         if np.isinf(grade[a+1]) or np.isnan(grade[a+1]):
             grade[a+1] = grade[a]
 
-    return tuple(d_dist), tuple(grade)
+    return d_dist, grade
 
 def get_distances(coordinates):
     FT_PER_KM = 3280.84
