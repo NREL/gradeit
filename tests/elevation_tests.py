@@ -92,9 +92,28 @@ class ElevTestRasterDB(unittest.TestCase):
                                         lon='lon', 
                                         filter=False)
         
-        np.testing.assert_almost_equal(np.array(self.data['elevation_ft']), 
-                                        self.no_filter_desired_elevation_ft, 
-                                        decimal=2)
+        bool_out = np.allclose(np.array(self.data['elevation_ft']),
+                             self.no_filter_desired_elevation_ft,
+                             atol = 50) # 50 ft absolute tolerance
+        
+        self.assertTrue(bool_out)
+        
+    
+    def test_raster_filter(self):
+        """
+        Call the USGS Web API to append elevation at discrete points, 
+        filter the results
+        """
+        self.data = elevation.usgs_local_data(self.data_drvcyc, 
+                                        lat='lat', 
+                                        lon='lon', 
+                                        filter=True)
+        
+        bool_out = np.allclose(np.array(self.data_drvcyc['elevation_ft_filtered']),
+                             self.filter_desired_df['elevation_ft_filtered'],
+                             atol = 50) # 50 ft absolute tolerance
+        
+        self.assertTrue(bool_out)
 
 if __name__ == '__main__':
     unittest.main(warnings='ignore') 
