@@ -26,11 +26,11 @@ def gradeit(df = None, lat_col = 'lat', lon_col = 'lon', filtering = False, sour
     
     else:
         raise Exception(
-        '''
+        """
         Invalid elevation data source provided.
         
         Provide one of these options: ['usgs-api','usgs-local']
-        '''
+        """
         )
         
     # Cases where filtering is desired return both filtered and unfiltered results

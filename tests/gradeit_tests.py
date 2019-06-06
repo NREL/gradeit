@@ -70,6 +70,12 @@ class GradeitTests(unittest.TestCase):
                                     source='usgs-local')
         
         pd.testing.assert_frame_equal(df_result, self.filter_local_desired_df)
+        
+    
+    def test_source_exception(self):
+        # Test that an exception is raised if invalid data source is provided
+        self.assertRaises(Exception, gradeit.gradeit, self.data_drvcyc,
+                          'lat', 'lon', True, 'Google')
 
 
 if __name__ == '__main__':
