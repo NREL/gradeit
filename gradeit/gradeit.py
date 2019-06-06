@@ -1,77 +1,50 @@
 """Module contains the primary functionality of GradeIT."""
 
-from .elevation import get_elevation, elevation_filter
-from .grade import get_grade
+from gradeit import elevation
+from gradeit import grade
 
 def gradeit(df = None, lat_col = 'lat', lon_col = 'lon', filtering = False, source = 'usgs-api'):
  
-    # if no query was provided throw exception
-    if df is None:
-        raise Exception(
-	'''
-	No spatial data provided.
-	
-	Please provide a dataframe with latitude/longitude values 
-    and the names of the columns containing that data.
-	'''
-                       )
+
 
     coordinates = list(zip(df[lat_col], df[lon_col]))
         
-    if filtering == False:
-        df['elevation_ft'] = get_elevation(coordinates, source=source)
+    # Run the appropriate elevation function based on user's desired data source
+    if source == 'usgs-api':
         
-        distance_ft, grade_dec = get_grade(tuple(df['elevation_ft'].values), coordinates=coordinates)
+        df = elevation.usgs_api(df,
+                               lat=lat_col,
+                               lon=lon_col,
+                               filter=filtering)
         
-        df['distance_ft'] = [0] + list(distance_ft)
+    elif source == 'usgs-local':
         
-        df['grade_dec'] = grade_dec
-
-
+        df = elevation.usgs_local_data(df,
+                                       lat=lat_col,
+                                       lon=lon_col,
+                                       filter=filtering)
+    
+    else:
+        raise Exception(
+        '''
+        Invalid elevation data source provided.
+        
+        Provide one of these options: ['usgs-api','usgs-local']
+        '''
+        )
+        
+    # Cases where filtering is desired return both filtered and unfiltered results
+    # Select the filtered elevation data for grade derivation
     if filtering == True:
-        df['elevation_ft'] = get_elevation(coordinates, source=source)
-        
-        distance_ft, grade_dec = get_grade(tuple(df['elevation_ft'].values), coordinates=coordinates)
-        
-        df['distance_ft'] = [0] + list(distance_ft)
-        
-        df['grade_dec'] = grade_dec
-        
-#     # process a vehicle-trip-data-based query if vehicle data is provided
-#     elif vehicle_trip_data is not None:
-#         # if elevation has not been provided calculate it
-#         if not 'elev_ft' in vehicle_trip_data:
-#             coords = list(zip(vehicle_trip_data['lat'], vehicle_trip_data['lon']))
-#             vehicle_trip_data['elev_ft'] = get_elevation(coords,
-#                                                     source=elevation_source)
+        elev_arr = df['elevation_ft_filtered'].values
+    else:
+        elev_arr = df['elevation_ft'].values
 
+    distance_ft, grade_dec = grade.get_grade(elev_arr, coordinates=coordinates)
 
-#         filtered_elev_tuple, filtered_grade_tuple, filtered_cuml_dist, unfiltered_grade_tuple, unfiltered_cuml_dist = elevation_filter(vehicle_trip_data)
+    df['distance_ft'] = [0] + list(distance_ft)
 
-#         gradeit_dict = {
-# 		        'elevation (unfiltered)' : vehicle_trip_data['elev_ft'],
-# 		        'elevation (filtered)' : filtered_elev_tuple,
-# 			'grade (filtered)' : filtered_grade_tuple,
-#             'grade (unfiltered)' : unfiltered_grade_tuple,
-#             'distance (filtered)' : filtered_cuml_dist,
-#             'distance (unfiltered)' : unfiltered_cuml_dist,
-# 			'source' : elevation_source
-# 			}
+    df['grade_dec'] = grade_dec
 
-#     # otherwise, process a coordinate-based query
-#     else:
-#         # get elevation values
-#         elev_tuple = get_elevation(coordinates, source=elevation_source)
-     
-#         # get grade values
-#         distance_tuple, grade_tuple = get_grade(elev_tuple, coordinates=coordinates)
-
-#         # place both tuples in a dictionary
-#         gradeit_dict = {
-#                     'elevation (unfiltered)' : elev_tuple,
-#                     'distance (feet)':distance_tuple,
-#                     'grade (unfiltered)' : grade_tuple,
-#                     'source' : elevation_source,
-#                     }
 
     return df
