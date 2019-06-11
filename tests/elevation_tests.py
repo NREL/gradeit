@@ -26,8 +26,7 @@ class ElevTestApi(unittest.TestCase):
         self.data_drvcyc = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts.csv')
 
         # Testing was run manually to generate a solution file for the larger test data
-        self.filter_desired_df = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts_SOLUTION.csv')
-
+        self.api_filter_desired_df = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts_API-FILTER-SOLUTION.csv')
 
     def tearDown(self):
         pass
@@ -56,10 +55,7 @@ class ElevTestApi(unittest.TestCase):
                                         lon='lon', 
                                         filter=True)
 
-
-        np.testing.assert_almost_equal(np.array(self.data_drvcyc), 
-                                        self.filter_desired_df, 
-                                        decimal=2)
+        pd.testing.assert_frame_equal(self.data_drvcyc, self.api_filter_desired_df)
     
     
 class ElevTestRasterDB(unittest.TestCase):
@@ -80,7 +76,7 @@ class ElevTestRasterDB(unittest.TestCase):
         self.data_drvcyc = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts.csv')
 
         # Testing was run manually to generate a solution file for the larger test data
-        self.filter_desired_df = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts_SOLUTION.csv')
+        self.local_filter_desired_df = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts_LOCAL-FILTER-SOLUTION.csv')
 
     def test_raster_no_filter(self):
         """
@@ -109,11 +105,7 @@ class ElevTestRasterDB(unittest.TestCase):
                                         lon='lon', 
                                         filter=True)
         
-        bool_out = np.allclose(np.array(self.data_drvcyc['elevation_ft_filtered']),
-                             self.filter_desired_df['elevation_ft_filtered'],
-                             atol = 50) # 50 ft absolute tolerance
-        
-        self.assertTrue(bool_out)
+        pd.testing.assert_frame_equal(self.data_drvcyc, self.local_filter_desired_df)
 
 if __name__ == '__main__':
     unittest.main(warnings='ignore') 
