@@ -80,7 +80,7 @@ def _elevation_filter(df, lat='lat', lon='lon'):
     elev_linear_sg = signal.savgol_filter(elev_linear, window_length=17, polyorder=3)
 
     df['cumulative_original_distance_df'] = np.append(0,np.cumsum(distances))
-    df['cumulative_uniform_distance_ft'] = cuml_dist
+    df['cumulative_uniform_distance_ft'] = xnew
     df['elevation_ft_filtered'] = elev_linear_sg
     
     return df
