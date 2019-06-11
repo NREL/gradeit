@@ -13,62 +13,69 @@ import pandas as pd
 
 from gradeit import gradeit
 
-class GradeitTestCoords(unittest.TestCase):
-
-    # Our user has GPS data along I-70 that they would like to append elevation
-    # and grade information to
+class GradeitTests(unittest.TestCase):
+    
+    # Load desired solution CSVs from /tests/.data directory
+    # Solutions are for both 10 point sequence on I-70 and 150 point drive cycle sample
     def setUp(self):
-        
         self.data = pd.DataFrame()
         self.data['lat'] = np.linspace(39.702730, 39.695368, 10)
         self.data['lon'] = np.linspace(-105.245678, -105.209049, 10)
-
-        self.check_usgs_df = self.data.copy()
-        self.check_usgs_df['elevation_ft'] = [7048.15, 7015.69, 7157.89, 7004.84, 6921.27, 6840.03, 6696.7, 6735.26, 6554.42, 6445.5]
-        self.check_usgs_df['distance_ft'] = [0, 1336.0892816, 1336.0892816, 1336.0892816, 1336.0892816, 1336.12209, 1336.12209, 1336.12209, 1336.12209, 1336.1548984]
-        self.check_usgs_df['grade_dec'] = [0.0, -0.0243, 0.1064, -0.1146, -0.0625, -0.0608, -0.1073, 0.0289, -0.1353, -0.0815]
-
-        self.check_raster_df = self.data.copy()
-        self.check_raster_df['elevation_ft'] = [7051.12670073, 7019.63912719, 7166.56244738, 6999.89801814, 6919.22908307, 6827.4985268, 6672.75637856, 6740.37844783, 6551.38332075, 6451.97571102]
-        self.check_raster_df['distance_ft'] = [0., 1336.0892816, 1336.0892816, 1336.0892816, 1336.0892816, 1336.12209, 1336.12209, 1336.12209, 1336.12209, 1336.1548984]
-        self.check_raster_df['grade_dec'] = [0., -0.0236, 0.11, -0.1247, -0.0604, -0.0687, -0.1158, 0.0506, -0.1415, -0.0744]
-
-    def tearDown(self):
-        pass
-
-    def test_usgs_api_no_filter(self):
         
-        self.data = gradeit.gradeit(self.data,
-                        lat_col = 'lat',
-                        lon_col = 'lon',
-                        filtering = False,
-                        source = 'usgs-api')
+        self.unfiltered_api_desired_df = pd.read_csv('.data/i70_10pnts_INTEGRATED_SOLUTION.csv')
         
-        pd.testing.assert_frame_equal(self.data, self.check_usgs_df)
+        self.data_drvcyc = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts.csv')
 
+        self.filter_api_desired_df = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts_INTEGRATION_SOLUTION.csv')
+        
+        self.unfiltered_local_desired_df = pd.read_csv('.data/i70_10pnts_usgs-local_INTEGRATED_SOLUTION.csv')
+
+        self.filter_local_desired_df = pd.read_csv('.data/caltrans_drvCycle_2345470_1_150pnts_usgs-local_INTEGRATION_SOLUTION.csv')
     
-    def test_raster_db_no_filter(self):
+    def test_usgs_api_no_filter(self):
+        df_result = gradeit.gradeit(df=self.data,
+                                    lat_col='lat',
+                                    lon_col='lon',
+                                    filtering=False,
+                                    source='usgs-api')
         
-        self.data = gradeit.gradeit(self.data,
-                        lat_col = 'lat',
-                        lon_col = 'lon',
-                        filtering = False,
-                        source = 'arnaud-server')
-       
-        pd.testing.assert_frame_equal(self.data, self.check_raster_df)
+        pd.testing.assert_frame_equal(df_result, self.unfiltered_api_desired_df)
         
-
-
-class GradeitTestDriveCycles(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_usgs_api_filter(self):
-        pass
-
+    
+    def test_usgs_api_with_filter(self):
+        df_result = gradeit.gradeit(df=self.data_drvcyc,
+                                    lat_col='lat',
+                                    lon_col='lon',
+                                    filtering=True,
+                                    source='usgs-api')
+        
+        pd.testing.assert_frame_equal(df_result, self.filter_api_desired_df)
+        
+        
+    def test_usgs_local_no_filter(self):
+        df_result = gradeit.gradeit(df=self.data,
+                                    lat_col='lat',
+                                    lon_col='lon',
+                                    filtering=False,
+                                    source='usgs-local')
+        
+        pd.testing.assert_frame_equal(df_result, self.unfiltered_local_desired_df)
+        
+    
+    def test_usgs_local_with_filter(self):
+        df_result = gradeit.gradeit(df=self.data_drvcyc,
+                                    lat_col='lat',
+                                    lon_col='lon',
+                                    filtering=True,
+                                    source='usgs-local')
+        
+        pd.testing.assert_frame_equal(df_result, self.filter_local_desired_df)
+        
+    
+    def test_source_exception(self):
+        # Test that an exception is raised if invalid data source is provided
+        self.assertRaises(Exception, gradeit.gradeit, self.data_drvcyc,
+                          'lat', 'lon', True, 'Google')
 
 
 if __name__ == '__main__':
