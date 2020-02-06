@@ -11,15 +11,21 @@ data = pd.DataFrame()
 data['lat'] = np.linspace(39.702730, 39.595368, 50)
 data['lon'] = np.linspace(-105.245678, -105.109049, 50)
 
-output = elevation.usgs_api(data, 
-                            lat='lat', 
-                            lon='lon', 
-                            filter=False)
+# output = elevation.usgs_api(data, 
+#                             lat='lat', 
+#                             lon='lon', 
+#                             filter=False)
 
-output_fltr = elevation.usgs_api(data, 
-                            lat='lat', 
-                            lon='lon', 
-                            filter=True)
+# output_fltr = elevation.usgs_api(data, 
+#                             lat='lat', 
+#                             lon='lon', 
+#                             filter=True)
 
-print(output)
-print(output_fltr)
+output_raster = elevation.usgs_local_data(data, 
+                                        lat='lat', 
+                                        lon='lon', 
+                                        filter=False)
+
+# print(output)
+# print(output_fltr)
+print(output_raster)
