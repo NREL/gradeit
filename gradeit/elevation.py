@@ -86,7 +86,7 @@ def _elevation_filter(df, lat='lat', lon='lon'):
     return df
 
 
-def usgs_local_data(df, lat='lat', lon='lon', filter=False):
+def usgs_local_data(df, usgs_db_path, lat='lat', lon='lon', filter=False):
     """
     Look up elevation for every location in a dataframe by latitude, longitude 
     coordinates. The source data is a locally downloaded raster database 
@@ -94,7 +94,7 @@ def usgs_local_data(df, lat='lat', lon='lon', filter=False):
     """
 
     coordinates = list(zip(df[lat], df[lon]))
-    df['elevation_ft'] = get_raster_elev_profile(coordinates)
+    df['elevation_ft'] = get_raster_elev_profile(coordinates, usgs_db_path)
 
     if filter == True:
         df = _elevation_filter(df, lat=lat, lon=lon)
@@ -102,7 +102,7 @@ def usgs_local_data(df, lat='lat', lon='lon', filter=False):
     return df
 
 
-def get_raster_elev_profile(coordinates):
+def get_raster_elev_profile(coordinates, usgs_db_path):
     """
     This function takes latitude and longitude values, of coordinate pairs
     and returns an elevation profile from the raster database on the
@@ -127,7 +127,7 @@ def get_raster_elev_profile(coordinates):
         ts = [row_col[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
         grid_lats = [lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
         grid_lons = [lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
-        elevation = get_raster_elev_data(uniq_ref, grid_lats, grid_lons)
+        elevation = get_raster_elev_data(uniq_ref, grid_lats, grid_lons, usgs_db_path)
         elevation_full += elevation
         ts_full += ts
 
@@ -178,7 +178,7 @@ def get_raster_metadata_and_data(raster_path):
 
     return (xOrigin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
 
-def get_raster_elev_data(grid_ref, lats, lons):
+def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
     """
     A function that specifies the path to the raster database, calls
     get_raster_metadata_and_data(raster_path), processes the results
@@ -194,7 +194,10 @@ def get_raster_elev_data(grid_ref, lats, lons):
     elevation = []
    
     # path to arnaud's raster database
-    db_path = Path("/backup/mbap_shared/NED_13/") # Path from pathlib lbrary
+    # db_path = Path("/backup/mbap_shared/NED_13/") # Path from pathlib lbrary
+    # db_path = Path("/Volumes/ssh/backup/mbap_shared/NED_13/")
+    db_path = Path(usgs_db_path)
+
     # path from database top level down to raster file
     sub_path = Path() / 'grid' / grid_ref / ('grd' + grid_ref + '_13') # Path from pathlib
     # complete path
