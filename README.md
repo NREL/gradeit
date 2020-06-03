@@ -30,3 +30,5 @@ You have now created and activated the gradeit conda environment and are ready t
 [update image with something that exactly represents how this version of GradeIT filters]
 
 <img src="docs/imgs/grade_filters.png">
+
+Wood, Eric, E. Burton, A. Duran, and J. Gonder. Appending High-Resolution Elevation Data to GPS Speed Traces for Vehicle Energy Modeling and Simulation. No. NREL/TP-5400-61109. National Renewable Energy Lab.(NREL), Golden, CO (United States), 2014.
