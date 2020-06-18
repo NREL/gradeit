@@ -2,11 +2,12 @@
 
 from gradeit import elevation
 from gradeit import grade
+import numpy as np
 
 
 # TODO: Add path to raster DB as an optional argument
 def gradeit(df=None, lat_col='lat', lon_col='lon', filtering=False, source='usgs-api',
-            usgs_db_path='/backup/mbap_shared/NED_13/'):
+            usgs_db_path='/backup/mbap_shared/NED_13/', des_sg = 17):
 
     coordinates = list(zip(df[lat_col], df[lon_col]))
 
@@ -16,7 +17,8 @@ def gradeit(df=None, lat_col='lat', lon_col='lon', filtering=False, source='usgs
         df = elevation.usgs_api(df,
                                 lat=lat_col,
                                 lon=lon_col,
-                                filter=filtering)
+                                filter=filtering,
+                                sg_window = des_sg)
 
     elif source == 'usgs-local':
 
@@ -24,7 +26,8 @@ def gradeit(df=None, lat_col='lat', lon_col='lon', filtering=False, source='usgs
                                        usgs_db_path=usgs_db_path,
                                        lat=lat_col,
                                        lon=lon_col,
-                                       filter=filtering)
+                                       filter=filtering,
+                                       sg_window = des_sg)
 
     else:
         raise Exception(
@@ -38,14 +41,16 @@ def gradeit(df=None, lat_col='lat', lon_col='lon', filtering=False, source='usgs
     # Cases where filtering is desired return both filtered and unfiltered results
     # Select the filtered elevation data for grade derivation
     if filtering:
-        elev_arr = df['elevation_ft_filtered'].values
-    else:
-        elev_arr = df['elevation_ft'].values
+        elev_arr_filtered = df['elevation_ft_filtered'].values
+        distance_ft_filtered, grade_dec_filtered = grade.get_grade(elev_arr_filtered, coordinates=coordinates)
+        df['grade_dec_filtered'] = grade_dec_filtered
+        df['distance_ft_filtered'] = [0] + list(distance_ft_filtered)
+    #Have the unfiltered grade anyways for comparison
+    elev_arr_unfiltered = df['elevation_ft'].values
+    distance_ft_unfiltered, grade_dec_unfiltered = grade.get_grade(elev_arr_unfiltered, coordinates=coordinates)
+    df['distance_ft_unfiltered'] = [0] + list(distance_ft_unfiltered)
+    df['grade_dec_unfiltered'] = grade_dec_unfiltered
 
-    distance_ft, grade_dec = grade.get_grade(elev_arr, coordinates=coordinates)
-
-    df['distance_ft'] = [0] + list(distance_ft)
-
-    df['grade_dec'] = grade_dec
+    #df['cumulative_distance_ft'] = np.cumsum(df['distance_ft']) #added: 06/15
 
     return df
