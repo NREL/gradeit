@@ -30,11 +30,14 @@ if local: db_path= "C:/Users/amahbub/Documents/gradeit_old/NED_13/"
 #choose filter option
 general_filter = True
 sg_val = 0 #Desired SG window # use 0 for default value
+#SG window value should be selected based on the data frame (df) size of the data spike. The user should first 
+#calculate the average vehicle speed [ft/s] = total_dist [ft]/total_df_size. Then the df_spike = spike_length[ft]/speed[ft/s].
+#default value: sg_window = factor*df_spike, where spike_length = 2500 ft and factor = 5 (in elevation.py). 
 
 #choose bridge filter
 bridge_filter = True
-extention = 0.5 #in miles. extention around the edges of the bridge to be filtered
-bridge_len = 2500 #in ft. minimum length of the bridge to be considered within the route
+extention = 0.5 #in miles, extention around the edges of the bridge to be filtered
+bridge_len = 2500 #in ft., minimum length of the bridge to be considered within the route
 bridge_param = [extention, bridge_len, general_filter]
 
 
