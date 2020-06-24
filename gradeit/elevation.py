@@ -22,7 +22,7 @@ warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
 
 
-def usgs_api(df, lat='lat', lon='lon', filter=False):
+def usgs_api(df, sg_window, lat='lat', lon='lon', filter=False):
     """
     Look up elevation for every location in a dataframe by latitude, longitude
     coordinates. The source for the data is the public USGS API, which compiles
@@ -34,7 +34,7 @@ def usgs_api(df, lat='lat', lon='lon', filter=False):
     df['elevation_ft'] = df.apply(lambda row: usgs_query_call(row[lat],row[lon]), axis=1)
 
     if filter == True:
-        df = _elevation_filter(df, lat=lat, lon=lon)
+        df = _elevation_filter(sg_window, df, lat=lat, lon=lon)
 
     return df
 
@@ -62,8 +62,32 @@ def usgs_query_call(lat,lon):
 
     return elev
 
+def check_sg (sg_window, cumlDist):
+    #compute the default value of SG window.
+    avg_spd = cumlDist[-1]/len(cumlDist) #vehicle avg speed in ft/s
+    filter_width = 2500 #in [ft], width of the spike to be filtered (tentative)
+    filter_factor = 5
+    df_filter = filter_width/avg_spd*filter_factor #(estimated formula, change filter_width and filter_factor to get desired effect)
+    if df_filter > len(cumlDist): df_filter = len(cumlDist) - 10 #safeguard against crossing sg array size
+    sg_default = int(round(df_filter))
+    if sg_default % 2 == 0: sg_default += 1
+    # user inputs 0 to access the default value (see basic.py)
+    if sg_window == 0:
+        print("Default SG window applied: "+ str(sg_default))
+        return sg_default
+    else:
+        #checks the validility of the user defined window
+        if sg_window % 2 == 0:
+            sg_window += 1
+            print("SG window cannot be an even number.")
+            print("SG window applied: "+ str(sg_window))
+        if (sg_window > len(cumlDist)) or (sg_window < 3): #sg_window must be greater than polyorder = 3 and less than df size
+            sg_window = sg_default
+            print("SG window provided is greater than list length or less than polyorder.")
+            print("Default SG window applied: " + str(sg_default))
+        return sg_window
 
-def _elevation_filter(df, lat='lat', lon='lon'):
+def _elevation_filter(sg_window, df, lat='lat', lon='lon'):
    
     # resample uniformly
     coordinates = list(zip(df[lat], df[lon]))
@@ -73,20 +97,23 @@ def _elevation_filter(df, lat='lat', lon='lon'):
     # linear interpolation
     flinear = sp.interpolate.interp1d(cuml_dist, df['elevation_ft'])
 
+    # note: discretization size needs to be tunable, default would be len(cuml_dist)
     xnew = np.linspace(cuml_dist[0], cuml_dist[-1], len(cuml_dist))
     elev_linear = flinear(xnew)
-    
-    # run SavGol filter
-    elev_linear_sg = signal.savgol_filter(elev_linear, window_length=17, polyorder=3)
 
-    df['cumulative_original_distance_df'] = np.append(0,np.cumsum(distances))
-    df['cumulative_uniform_distance_ft'] = xnew
+    #note: run final check on user SG value, provide default value if necessary
+    sg_window = check_sg (sg_window, cuml_dist)
+    # run SavGol filter
+    elev_linear_sg = signal.savgol_filter(elev_linear, window_length=sg_window, polyorder=3)
+
+    df['cumulative_original_distance_ft'] = cuml_dist
+    df['cumulative_uniform_distance_ft'] = xnew #resampled cuml distance
     df['elevation_ft_filtered'] = elev_linear_sg
     
     return df
 
 
-def usgs_local_data(df, usgs_db_path, lat='lat', lon='lon', filter=False):
+def usgs_local_data(df, usgs_db_path, sg_window, lat='lat', lon='lon', filter=False):
     """
     Look up elevation for every location in a dataframe by latitude, longitude 
     coordinates. The source data is a locally downloaded raster database 
@@ -97,7 +124,7 @@ def usgs_local_data(df, usgs_db_path, lat='lat', lon='lon', filter=False):
     df['elevation_ft'] = get_raster_elev_profile(coordinates, usgs_db_path)
 
     if filter == True:
-        df = _elevation_filter(df, lat=lat, lon=lon)
+        df = _elevation_filter( sg_window, df, lat=lat, lon=lon)
 
     return df
 
@@ -255,7 +282,3 @@ def build_grid_refs(lats, lons):
         else:
             grid_refs += ['0']
     return grid_refs
-    
-
-    
-    
