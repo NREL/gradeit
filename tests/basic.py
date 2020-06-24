@@ -32,7 +32,7 @@ if local:
 
 # choose filter option
 general_filter = True
-sg_val = 0  # Desired SG window # use 0 for default value
+sg_val = 5  # Desired SG window # use 0 for default value
 # SG window value should be selected based on the data frame (df) size of the data spike. The user should first
 # calculate the average vehicle speed [ft/s] = total_dist [ft]/total_df_size. Then the df_spike = spike_length[
 # ft]/speed[ft/s]. default value: sg_window = factor*df_spike, where spike_length = 2500 ft and factor = 5 (in
@@ -45,7 +45,7 @@ bridge_len = 2500  # in ft., minimum length of the bridge to be considered withi
 bridge_param = [extension, bridge_len, general_filter]
 
 # choose plotting option
-do_plot = True
+do_plot = False
 plot_elevation = True
 plot_grade = True
 plot_param = np.append(plot_elevation, plot_grade)
