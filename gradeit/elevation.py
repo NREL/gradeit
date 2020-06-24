@@ -65,40 +65,33 @@ def usgs_query_call(lat, lon):
     return elev
 
 
-def check_sg(sg_window, cumlDist):
-    # compute the default value of SG window.
-    avg_spd = cumlDist[-1] / len(cumlDist)  # vehicle avg speed in ft/s
-    filter_width = 2500  # in [ft], width of the spike to be filtered (tentative)
+def check_sg (sg_window, cumlDist):
+    #compute the default value of SG window.
+    avg_spd = cumlDist[-1]/len(cumlDist) #vehicle avg speed in ft/s
+    filter_width = 2500 #in [ft], width of the spike to be filtered (tentative)
     filter_factor = 5
-    df_filter = filter_width / avg_spd * filter_factor  # (estimated formula, change filter_width and filter_factor
-    # to get desired effect)
-
-    if df_filter > len(cumlDist):
-        df_filter = len(cumlDist) - 10  # safeguard against crossing sg array size
-
+    polyorder = 3 #fixed value, do not change!
+    df_filter = round(filter_width/avg_spd*filter_factor) #(estimated formula, change filter_width and filter_factor to get desired effect)
+    if df_filter < polyorder: df_filter = polyorder + 2
+    elif df_filter > len(cumlDist): df_filter = len(cumlDist) * 0.75 #safeguard against crossing sg array size
     sg_default = int(round(df_filter))
-
-    if sg_default % 2 == 0:
-        sg_default += 1
-
+    if sg_default % 2 == 0: sg_default += 1 #if even, transform to odd
+    print("Default SG computed: "+ str(sg_default))
+    ####################################################
     # user inputs 0 to access the default value (see basic.py)
     if sg_window == 0:
-        print("Default SG window applied: " + str(sg_default))
+        print("Default SG window applied: "+ str(sg_default))
         return sg_default
-
     else:
-        # checks the validility of the user defined window
+        #checks the validility of the user defined window
         if sg_window % 2 == 0:
             sg_window += 1
             print("SG window cannot be an even number.")
-            print("SG window applied: " + str(sg_window))
-
-        if (sg_window > len(cumlDist)) or (
-                sg_window < 3):  # sg_window must be greater than polyorder = 3 and less than df size
+            print("SG window modified: "+ str(sg_window))
+        if (sg_window > len(cumlDist)) or (sg_window < 3): #sg_window must be greater than polyorder = 3 and less than df size
             sg_window = sg_default
             print("SG window provided is greater than list length or less than polyorder.")
             print("Default SG window applied: " + str(sg_default))
-
         return sg_window
 
 
