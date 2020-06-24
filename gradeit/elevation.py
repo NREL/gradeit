@@ -18,6 +18,7 @@ from scipy import integrate
 import scipy as sp
 from scipy import signal
 import warnings
+
 warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
 
@@ -30,8 +31,9 @@ def usgs_api(df, sg_window, lat='lat', lon='lon', filter=False):
 
     More information is available at https://nationalmap.gov/epqs/
     """
-
-    df['elevation_ft'] = df.apply(lambda row: usgs_query_call(row[lat],row[lon]), axis=1)
+    # print(df[lat], df[lon])
+    # print(usgs_query_call(df[lat][0], df[lon][0]))
+    df['elevation_ft'] = df.apply(lambda row: usgs_query_call(row[lat], row[lon]), axis=1)
 
     if filter == True:
         df = _elevation_filter(sg_window, df, lat=lat, lon=lon)
@@ -39,7 +41,7 @@ def usgs_api(df, sg_window, lat='lat', lon='lon', filter=False):
     return df
 
 
-def usgs_query_call(lat,lon):
+def usgs_query_call(lat, lon):
     """
     Build and run the query to the USGS API endpoint
     """
@@ -51,49 +53,61 @@ def usgs_query_call(lat,lon):
     OUTPUT = 'json'
 
     query = '{url}?x={lon}&y={lat}&units={units}&output={output}'.format(
-            url=URL, lon=lon, lat=lat, units=UNITS, output=OUTPUT
-            )
+        url=URL, lon=lon, lat=lat, units=UNITS, output=OUTPUT
+    )
     response_json = requests.get(query)
-    results = loads(response_json.text) # a dict containing the json data
-    elev = results['USGS_Elevation_Point_Query_Service']\
-                    ['Elevation_Query']\
-                    ['Elevation']
+    results = loads(response_json.text)  # a dict containing the json data
+    elev = results['USGS_Elevation_Point_Query_Service'] \
+        ['Elevation_Query'] \
+        ['Elevation']
     elev = float(elev)
 
     return elev
 
-def check_sg (sg_window, cumlDist):
-    #compute the default value of SG window.
-    avg_spd = cumlDist[-1]/len(cumlDist) #vehicle avg speed in ft/s
-    filter_width = 2500 #in [ft], width of the spike to be filtered (tentative)
+
+def check_sg(sg_window, cumlDist):
+    # compute the default value of SG window.
+    avg_spd = cumlDist[-1] / len(cumlDist)  # vehicle avg speed in ft/s
+    filter_width = 2500  # in [ft], width of the spike to be filtered (tentative)
     filter_factor = 5
-    df_filter = filter_width/avg_spd*filter_factor #(estimated formula, change filter_width and filter_factor to get desired effect)
-    if df_filter > len(cumlDist): df_filter = len(cumlDist) - 10 #safeguard against crossing sg array size
+    df_filter = filter_width / avg_spd * filter_factor  # (estimated formula, change filter_width and filter_factor
+    # to get desired effect)
+
+    if df_filter > len(cumlDist):
+        df_filter = len(cumlDist) - 10  # safeguard against crossing sg array size
+
     sg_default = int(round(df_filter))
-    if sg_default % 2 == 0: sg_default += 1
+
+    if sg_default % 2 == 0:
+        sg_default += 1
+
     # user inputs 0 to access the default value (see basic.py)
     if sg_window == 0:
-        print("Default SG window applied: "+ str(sg_default))
+        print("Default SG window applied: " + str(sg_default))
         return sg_default
+
     else:
-        #checks the validility of the user defined window
+        # checks the validility of the user defined window
         if sg_window % 2 == 0:
             sg_window += 1
             print("SG window cannot be an even number.")
-            print("SG window applied: "+ str(sg_window))
-        if (sg_window > len(cumlDist)) or (sg_window < 3): #sg_window must be greater than polyorder = 3 and less than df size
+            print("SG window applied: " + str(sg_window))
+
+        if (sg_window > len(cumlDist)) or (
+                sg_window < 3):  # sg_window must be greater than polyorder = 3 and less than df size
             sg_window = sg_default
             print("SG window provided is greater than list length or less than polyorder.")
             print("Default SG window applied: " + str(sg_default))
+
         return sg_window
 
+
 def _elevation_filter(sg_window, df, lat='lat', lon='lon'):
-   
     # resample uniformly
     coordinates = list(zip(df[lat], df[lon]))
     distances = get_distances(coordinates)
-    cuml_dist = np.append(0,np.cumsum(distances))
-    
+    cuml_dist = np.append(0, np.cumsum(distances))
+
     # linear interpolation
     flinear = sp.interpolate.interp1d(cuml_dist, df['elevation_ft'])
 
@@ -101,15 +115,15 @@ def _elevation_filter(sg_window, df, lat='lat', lon='lon'):
     xnew = np.linspace(cuml_dist[0], cuml_dist[-1], len(cuml_dist))
     elev_linear = flinear(xnew)
 
-    #note: run final check on user SG value, provide default value if necessary
-    sg_window = check_sg (sg_window, cuml_dist)
+    # note: run final check on user SG value, provide default value if necessary
+    sg_window = check_sg(sg_window, cuml_dist)
     # run SavGol filter
     elev_linear_sg = signal.savgol_filter(elev_linear, window_length=sg_window, polyorder=3)
 
     df['cumulative_original_distance_ft'] = cuml_dist
-    df['cumulative_uniform_distance_ft'] = xnew #resampled cuml distance
+    df['cumulative_uniform_distance_ft'] = xnew  # resampled cuml distance
     df['elevation_ft_filtered'] = elev_linear_sg
-    
+
     return df
 
 
@@ -123,8 +137,8 @@ def usgs_local_data(df, usgs_db_path, sg_window, lat='lat', lon='lon', filter=Fa
     coordinates = list(zip(df[lat], df[lon]))
     df['elevation_ft'] = get_raster_elev_profile(coordinates, usgs_db_path)
 
-    if filter == True:
-        df = _elevation_filter( sg_window, df, lat=lat, lon=lon)
+    if filter:
+        df = _elevation_filter(sg_window, df, lat=lat, lon=lon)
 
     return df
 
@@ -144,7 +158,7 @@ def get_raster_elev_profile(coordinates, usgs_db_path):
     lats = [coord[0] for coord in coordinates]
     lons = [coord[1] for coord in coordinates]
     elevation_full = []
-    ts_full = [] # track query order
+    ts_full = []  # track query order
     grid_refs = build_grid_refs(lats, lons)
     unique_grid_refs = list(set(grid_refs))
     row_col = range(0, len(lons))
@@ -160,7 +174,7 @@ def get_raster_elev_profile(coordinates, usgs_db_path):
 
     # reorder the elevation values to match the order of the query coordinates
     ts_full, elevation_full = [list(x) for x in zip(*sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0]))]
-    
+
     return elevation_full
 
 
@@ -177,33 +191,34 @@ def get_raster_metadata_and_data(raster_path):
     	a tuple containing the following metadata and data
     	(Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
-    data = Open(raster_path.as_posix()) # Open function from GDAL
+    data = Open(raster_path.as_posix())  # Open function from GDAL
     # if raster data returns as None, raise an exception
     # NOTE: returning NoneType values is GDAL's way of raising exceptions
     if data is None:
-        if raster_path.is_file(): # Path from pathlib
+        if raster_path.is_file():  # Path from pathlib
             error_msg = "GDAL could not open the raster file."
         else:
             error_msg = "The file path provided does not point to a valid raster file."
-        
+
         raise Exception(error_msg)
 
     # otherwise, GDAL successfully opened the raster file, return the data
     else:
-        #print 'Geotransform Elevation Data'
+        # print 'Geotransform Elevation Data'
         geotransform = data.GetGeoTransform()
         xOrigin = geotransform[0]
         yOrigin = geotransform[3]
         pixelWidth = geotransform[1]
         pixelHeight = geotransform[5]
-        #print 'Unpack Grid'
+        # print 'Unpack Grid'
         data.ReadAsArray()
         cols = data.RasterXSize
         rows = data.RasterYSize
         bands = data.RasterCount
-        #print 'Grid Unpack Complete'
+        # print 'Grid Unpack Complete'
 
     return (xOrigin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
+
 
 def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
     """
@@ -219,47 +234,48 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
     	a list of floats containing elevation values
     """
     elevation = []
-   
+
     # path to arnaud's raster database
     # db_path = Path("/backup/mbap_shared/NED_13/") # Path from pathlib lbrary
     # db_path = Path("/Volumes/ssh/backup/mbap_shared/NED_13/")
     db_path = Path(usgs_db_path)
 
     # path from database top level down to raster file
-    sub_path = Path() / 'grid' / grid_ref / ('grd' + grid_ref + '_13') # Path from pathlib
+    sub_path = Path() / 'grid' / grid_ref / ('grd' + grid_ref + '_13')  # Path from pathlib
     # complete path
-    raster_path = Path(db_path / sub_path / "w001001.adf") # Path from pathlib
-    
+    raster_path = Path(db_path / sub_path / "w001001.adf")  # Path from pathlib
+
     # if the raster path doesn't get exist, throw an exception
-    if not raster_path.exists(): # Path from pathlib
+    if not raster_path.exists():  # Path from pathlib
         error_msg = '''Invalid file path provided.
 	'{path}' does not exist.'''.format(path=raster_path)
         raise Exception(error_msg)
 
     # otherwise, get the raster metadata and data
     else:
-        (xOrigin, yOrigin, pixelWidth, pixelHeight,\
-	bands, rows, cols, data) = get_raster_metadata_and_data(raster_path)
+        (xOrigin, yOrigin, pixelWidth, pixelHeight,
+         bands, rows, cols, data) = get_raster_metadata_and_data(raster_path)
         xOffset = [int((v - xOrigin) / pixelWidth) if v < 0.0 else 'nan' for v in np.float64(lons)]
         yOffset = [int((v - yOrigin) / pixelHeight) if v > 0.0 else 'nan' for v in np.float64(lats)]
-        
+
         for val in range(len(lons)):
             if xOffset[val] == 'nan':
-                #print 'passed'
+                # print 'passed'
                 elevation += [np.nan]
             else:
 
                 for i in range(bands):
-                    band = data.GetRasterBand(i+1) # 1-based index
+                    band = data.GetRasterBand(i + 1)  # 1-based index
                     raster_data = band.ReadAsArray(xOffset[val], yOffset[val], 1, 1)
                     if raster_data is not None:
-                        elev_ft = float(raster_data[0,0]) * 3.28084
+                        elev_ft = float(raster_data[0, 0]) * 3.28084
                         elevation += [elev_ft]
                     else:
-                        #print 'passed'
+                        # print 'passed'
                         elevation += [np.nan]
         del data
     return elevation
+
 
 def build_grid_refs(lats, lons):
     """
@@ -275,10 +291,10 @@ def build_grid_refs(lats, lons):
     grid_refs = []
     for i in range(len(lons)):
         if lats[i] > 0.0 and lons[i] < 0.0:
-            val = str(int(abs(lons[i]))+1)
+            val = str(int(abs(lons[i])) + 1)
             if len(val) < 3:
                 val = '0' + val
-            grid_refs += ['n' + str(int(abs(lats[i]))+1) + 'w' + val]
+            grid_refs += ['n' + str(int(abs(lats[i])) + 1) + 'w' + val]
         else:
             grid_refs += ['0']
     return grid_refs
