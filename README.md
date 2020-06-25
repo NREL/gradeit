@@ -27,6 +27,9 @@ If you do not have the conda package manager, you can download and install it fr
 
 You have now created and activated the gradeit conda environment and are ready to run the package.
 
+## Getting Started
+In this repository, `tests/basic.py` will demonstrate a basic workflow to introduce users to the gradeit package. Additionally, the [gradeit-notebooks](https://github.com/NREL/gradeit-notebooks) repo contains various Jupyter notebooks that demonstrate gradeit applications and explore potential improvements.
+
 ## Filters
 Given the spatial noise that can be present in GPS data and the 1/3 arc-second resolution of the digital elevation
 model being employed, outliers and unrealistic topographical features can be present in the raw elevation profiles. 
