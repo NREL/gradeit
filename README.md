@@ -38,9 +38,9 @@ filter procedure is summarized in the figure below from Wood et al in 2014.
 
 <img src="docs/imgs/grade_filters.png">
 
-Wood, Eric, E. Burton, A. Duran, and J. Gonder. Appending High-Resolution Elevation Data to GPS Speed Traces for 
+<sub>Wood, Eric, E. Burton, A. Duran, and J. Gonder. Appending High-Resolution Elevation Data to GPS Speed Traces for 
 Vehicle Energy Modeling and Simulation. No. NREL/TP-5400-61109. National Renewable Energy Lab.(NREL), Golden, CO 
-(United States), 2014.
+(United States), 2014.<sub>
 
 Additionally, since the USGS Digital Elevation Model is a "bare earth" model, road infrastructure features (i.e. 
 bridges and overpasses) are often not represented in the data. Rather, the "bare earth" model represents the valley or
