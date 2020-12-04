@@ -45,7 +45,7 @@ bridge_len = 2500  # in ft., minimum length of the bridge to be considered withi
 bridge_param = [extension, bridge_len, general_filter]
 
 # choose plotting option
-do_plot = False
+do_plot = True
 plot_elevation = True
 plot_grade = True
 plot_param = np.append(plot_elevation, plot_grade)
@@ -69,15 +69,15 @@ if api:
 elif local:
     df_grade = gradeit(df=data, lat_col='lat', lon_col='lon', filtering=general_filter, source='usgs-local',
                        usgs_db_path=db_path, des_sg=sg_val)
-print(df_grade.info())
+print(df_grade.head())
 
 if bridge_filter:
     df_grade = gradeCorrection_bridge(df_grade, bridge_param)
 
-if do_plot:
-    plot_data(df_grade, general_filter, plot_param)
+# if do_plot:
+#     plot_data(df_grade, general_filter, plot_param)
 
-if save_df:
-    save_data(df_grade)
-print("Process completed!")
+# if save_df:
+#     save_data(df_grade)
+# print("Process completed!")
 #################################################################################################
