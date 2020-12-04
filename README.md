@@ -10,22 +10,26 @@ for vehicles traveling on paved roads. The python package offers options to use 
 model, which provides much faster results.
 
 ## Setup
-Clone or download the git repository and re-create the conda environment to automatically ensure that python and package 
-version dependencies are satisfied.
+Clone or download the git repository.
 
 ```git clone https://github.com/NREL/gradeit.git```
 
-```cd gradeit```
+gradeit depends on python 3.7. One way to satisfy this is to use conda:
 
-If you do not have the conda package manager, you can download and install it from the 
-[Anaconda website](https://www.anaconda.com/). Then conda can be used to create a new environment from the 
-```environment.yml``` file in this repository.
+```
+conda create -n gradeit python=3.7
+conda activate gradeit
+```
 
-```conda env create -f environment.yml```
+This will create a new conda environment that uses python 3.7.
 
-```conda activate gradeit```
+Then, you can install the gradeit library
 
-You have now created and activated the gradeit conda environment and are ready to run the package.
+```pip install gradeit```
+
+or if you're already in the gradeit root directory then:
+
+```pip install .```
 
 ## Getting Started
 In this repository, `tests/basic.py` will demonstrate a basic workflow to introduce users to the gradeit package. Additionally, the [gradeit-notebooks](https://github.com/NREL/gradeit-notebooks) repo contains various Jupyter notebooks that demonstrate gradeit applications and explore potential improvements.
