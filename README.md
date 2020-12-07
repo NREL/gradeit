@@ -32,7 +32,12 @@ or if you're already in the gradeit root directory then:
 ```pip install .```
 
 ## Getting Started
-In this repository, `tests/basic.py` will demonstrate a basic workflow to introduce users to the gradeit package. Additionally, the [gradeit-notebooks](https://github.com/NREL/gradeit-notebooks) repo contains various Jupyter notebooks that demonstrate gradeit applications and explore potential improvements.
+In this repository, `docs/demo.ipynb` will demonstrate the most basic application of the gradeit package. Additionally, the [gradeit-notebooks](https://github.com/NREL/gradeit-notebooks) repo contains various Jupyter notebooks that demonstrate gradeit applications and explore potential improvements.
+
+## USGS Elevation Data
+The United States Geological Survey offers a variety of products as a part of the [National Map](https://www.usgs.gov/core-science-systems/national-geospatial-program/national-map) project, including bare-earth elevation datasets. The 1/3 arc-second elevation dataset is continuous for the coterminous United States and is therefore used in GradeIT. As shown in ```docs/demo.ipynb``` appending elevation and grade to 1000+ points benefits significantly from having a local or network copy of the required USGS elevation data.
+
+NREL has the 1/3 arc-second raster data downloaded to on-site compute resources for large scale needs. Individual users can access the same raster data [here](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/13/ArcGrid/). In the future, we hope to add a utility to download and extract the necessary data for a user specified region, however, that feature is not available at this time - __contributions are encouraged!__
 
 ## Filters
 Given the spatial noise that can be present in GPS data and the 1/3 arc-second resolution of the digital elevation
