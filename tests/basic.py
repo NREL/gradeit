@@ -24,11 +24,11 @@ data['lon'] = np.linspace(-105.245678, -105.109049, 20)
 # data['lon'] = df_truck['longitude']
 
 # choose source: elevation data
-api = True
-local = False
+api = False
+local = True
 
 if local:
-    db_path = "C:/Users/amahbub/Documents/gradeit_old/NED_13/"
+    db_path = "/datasets/USGS/NED_13/"
 
 # choose filter option
 general_filter = True
