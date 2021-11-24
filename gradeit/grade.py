@@ -1,7 +1,5 @@
 """Module contains functionality associated with grade profiles."""
 
-# NOTE: temporary for functon i/o testing
-from numpy.random import randint
 import numpy as np
 from math import radians, degrees, cos, sin, asin, atan2, sqrt
 
@@ -11,15 +9,15 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
 
     # check that n > 1
     if len(elev_ft_arr) < 2:
-        raise ValueError('Determining grade requires at least 2 coordinates\n\t\ti.e. Input size of n > 1')
+        raise ValueError(
+            'Determining grade requires at least 2 coordinates\n\t\ti.e. Input size of n > 1'
+        )
 
     # if neither distance or coordinates are provided raise an exception
     if coordinates is None and distances is None:
-        raise Exception(
-            '''
+        raise Exception('''
 	Either distance or coordinates must be provided to the get_grade() function.
-	'''
-        )
+	''')
 
     # if only coordinates are provided, calculate the distance array
     if coordinates is not None and distances is None:
@@ -74,7 +72,7 @@ def haversine(lat1, lon1, lat2, lon2, get_bearing=False):
     # compute haversine result
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * sin(dlon / 2) ** 2
+    a = sin(dlat / 2)**2 + cos(lat1) * sin(dlon / 2)**2
     c = 2 * asin(sqrt(a))
     R = 6371  # radius of earth in km
     distance = c * R

@@ -1,11 +1,12 @@
-import numpy as np
 import matplotlib.pyplot as plt
+
 
 def plot_data(df, general_filter, plot_param):
     if plot_param[0]:
         # visualization of elevation data
         if general_filter:
-            plt.plot(df['cumulative_uniform_distance_ft'], df['elevation_ft_filtered'],
+            plt.plot(df['cumulative_uniform_distance_ft'],
+                     df['elevation_ft_filtered'],
                      df['cumulative_original_distance_ft'], df['elevation_ft'])
             plt.ylabel('Elevation [ft]')
             plt.xlabel('Distance [ft]')
@@ -23,8 +24,10 @@ def plot_data(df, general_filter, plot_param):
     if plot_param[1]:
         # visulalization of grade data
         if general_filter:
-            plt.plot(df['cumulative_uniform_distance_ft'], df['grade_dec_filtered'],
-                     df['cumulative_original_distance_ft'], df['grade_dec_unfiltered'])
+            plt.plot(df['cumulative_uniform_distance_ft'],
+                     df['grade_dec_filtered'],
+                     df['cumulative_original_distance_ft'],
+                     df['grade_dec_unfiltered'])
             plt.ylabel('Grade]')
             plt.xlabel('Distance [ft]')
             plt.grid()
@@ -32,7 +35,8 @@ def plot_data(df, general_filter, plot_param):
             plt.title('Grade vs. Distance')
             plt.show()
         else:
-            plt.plot(df_filtered['cumulative_uniform_distance_ft'], df_filtered['grade_dec_unfiltered'])
+            plt.plot(df['cumulative_uniform_distance_ft'],
+                     df['grade_dec_unfiltered'])
             plt.ylabel('Grade]')
             plt.xlabel('Distance [ft]')
             plt.grid()

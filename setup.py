@@ -22,16 +22,19 @@ setuptools.setup(
     ],
     python_requires='>=3.7',
     install_requires=[
-        "gdal>=2.3",
-        "geos",
-        "ipykernel",
-        "ipython",
-        "matplotlib",
         "numpy",
         "pandas",
         "requests",
         "scipy",
-        "sqlalchemy",
-        "psycopg2",
     ],
+    extras_require={
+        "with_gdal": [
+            "gdal>=2.3",
+        ],
+        "optional": [
+            "ipykernel",
+            "ipython",
+            "matplotlib",
+        ]
+    }
 )
