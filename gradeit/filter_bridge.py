@@ -37,8 +37,7 @@ def bridge_segmentation(bridge_raw):
     # extracting distance range from above data
     bridge = []
     for i in range(len(idx)):
-        val = bridge_raw['cumulative_original_distance_ft'][
-            idx[i][0]:idx[i][-1]]
+        val = bridge_raw['cumulative_original_distance_ft'][idx[i][0]:idx[i][-1]]
         if len(val):
             bridge.append(val)
     return bridge
@@ -69,9 +68,8 @@ def bridge_extention(bridge, data, des_dist):
         start_dist.append(bridge[i].iloc[0] - des_dist)
         end_dist.append(bridge[i].iloc[-1] + des_dist)
     for i in range(len(start_dist)):
-        bridge_ext.append(data.loc[(
-            (data['cumulative_original_distance_ft'] > start_dist[i]) &
-            (data['cumulative_original_distance_ft'] < end_dist[i]))])
+        bridge_ext.append(data.loc[((data['cumulative_original_distance_ft'] > start_dist[i]) &
+                                    (data['cumulative_original_distance_ft'] < end_dist[i]))])
     return (bridge_ext)
 
 
@@ -93,11 +91,9 @@ def edge_trim(bridge_ext, data, general_filter):
     for i in range(len(bridge_ext)):
         final_idx.append(bridge_ext[i].index)
         if general_filter:
-            data.loc[final_idx[i][0]:final_idx[i][-1],
-                     'grade_dec_filtered'] = 0
+            data.loc[final_idx[i][0]:final_idx[i][-1], 'grade_dec_filtered'] = 0
         else:
-            data.loc[final_idx[i][0]:final_idx[i][-1],
-                     'grade_dec_unfiltered'] = 0
+            data.loc[final_idx[i][0]:final_idx[i][-1], 'grade_dec_unfiltered'] = 0
     return data
 
 

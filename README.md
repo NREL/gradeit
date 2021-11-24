@@ -14,14 +14,14 @@ Clone or download the git repository.
 
 ```git clone https://github.com/NREL/gradeit.git```
 
-gradeit depends on python 3.7. One way to satisfy this is to use conda:
+gradeit depends on gdal. One way to satisfy this is to use conda:
 
 ```
-conda create -n gradeit python=3.7
+conda create -n gradeit python=3.8 gdal
 conda activate gradeit
 ```
 
-This will create a new conda environment that uses python 3.7.
+This will create a new conda environment that uses python 3.8.
 
 Then, you can install the gradeit library
 

@@ -10,8 +10,7 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
     # check that n > 1
     if len(elev_ft_arr) < 2:
         raise ValueError(
-            'Determining grade requires at least 2 coordinates\n\t\ti.e. Input size of n > 1'
-        )
+            'Determining grade requires at least 2 coordinates\n\t\ti.e. Input size of n > 1')
 
     # if neither distance or coordinates are provided raise an exception
     if coordinates is None and distances is None:
