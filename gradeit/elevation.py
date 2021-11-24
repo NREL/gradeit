@@ -10,7 +10,6 @@ import requests
 import numpy as np
 from json import loads
 from pathlib import Path
-from gdal import Open
 from matplotlib import pylab as mp
 from scipy import stats
 from scipy.interpolate import interp1d
@@ -18,6 +17,11 @@ from scipy import integrate
 import scipy as sp
 from scipy import signal
 import warnings
+
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
 
 warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
@@ -183,7 +187,7 @@ def get_raster_metadata_and_data(raster_path):
     	a tuple containing the following metadata and data
     	(Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
-    data = Open(raster_path.as_posix())  # Open function from GDAL
+    data = gdal.Open(raster_path.as_posix())  # Open function from GDAL
     # if raster data returns as None, raise an exception
     # NOTE: returning NoneType values is GDAL's way of raising exceptions
     if data is None:
