@@ -10,7 +10,6 @@ import requests
 import numpy as np
 from json import loads
 from pathlib import Path
-from gdal import Open
 from matplotlib import pylab as mp
 from scipy import stats
 from scipy.interpolate import interp1d
@@ -18,6 +17,11 @@ from scipy import integrate
 import scipy as sp
 from scipy import signal
 import warnings
+
+try:
+    from osgeo import gdal
+except ImportError:
+    import gdal
 
 warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
@@ -96,25 +100,24 @@ def check_sg (sg_window, cumlDist):
 
 
 def _elevation_filter(sg_window, df, lat='lat', lon='lon'):
-    # resample uniformly
+    """
+    This implementation applies the SG filter in the temporal domain
+    as opposed to the spatial domain. Filtering spatially requires 
+    error-proned resampling of the elevation signal to match a uniform
+    distance between each point. 
+    """
+
     coordinates = list(zip(df[lat], df[lon]))
     distances = get_distances(coordinates)
     cuml_dist = np.append(0, np.cumsum(distances))
 
-    # linear interpolation
-    flinear = sp.interpolate.interp1d(cuml_dist, df['elevation_ft'])
-
-    # note: discretization size needs to be tunable, default would be len(cuml_dist)
-    xnew = np.linspace(cuml_dist[0], cuml_dist[-1], len(cuml_dist))
-    elev_linear = flinear(xnew)
-
     # note: run final check on user SG value, provide default value if necessary
     sg_window = check_sg(sg_window, cuml_dist)
+    
     # run SavGol filter
-    elev_linear_sg = signal.savgol_filter(elev_linear, window_length=sg_window, polyorder=3)
+    elev_linear_sg = signal.savgol_filter(df['elevation_ft'], window_length=sg_window, polyorder=3)
 
     df['cumulative_original_distance_ft'] = cuml_dist
-    df['cumulative_uniform_distance_ft'] = xnew  # resampled cuml distance
     df['elevation_ft_filtered'] = elev_linear_sg
 
     return df
@@ -184,7 +187,7 @@ def get_raster_metadata_and_data(raster_path):
     	a tuple containing the following metadata and data
     	(Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
-    data = Open(raster_path.as_posix())  # Open function from GDAL
+    data = gdal.Open(raster_path.as_posix())  # Open function from GDAL
     # if raster data returns as None, raise an exception
     # NOTE: returning NoneType values is GDAL's way of raising exceptions
     if data is None:
