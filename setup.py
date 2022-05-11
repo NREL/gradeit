@@ -20,18 +20,13 @@ setuptools.setup(
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering"
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.8',
     install_requires=[
-        "gdal>=2.3",
-        "geos",
-        "ipykernel",
-        "ipython",
-        "matplotlib",
+        "xarray",
         "numpy",
         "pandas",
         "requests",
+        "rasterio",
         "scipy",
-        "sqlalchemy",
-        "psycopg2",
     ],
 )

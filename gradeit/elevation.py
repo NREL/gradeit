@@ -23,6 +23,8 @@ try:
 except ImportError:
     import gdal
 
+import xarray as xr
+
 warnings.simplefilter('ignore')
 from .grade import get_grade, get_distances
 
@@ -187,33 +189,18 @@ def get_raster_metadata_and_data(raster_path):
     	a tuple containing the following metadata and data
     	(Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
-    data = gdal.Open(raster_path.as_posix())  # Open function from GDAL
-    # if raster data returns as None, raise an exception
-    # NOTE: returning NoneType values is GDAL's way of raising exceptions
-    if data is None:
-        if raster_path.is_file():  # Path from pathlib
-            error_msg = "GDAL could not open the raster file."
-        else:
-            error_msg = "The file path provided does not point to a valid raster file."
-
-        raise Exception(error_msg)
+    data = xr.open_rasterio(raster_path)
 
     # otherwise, GDAL successfully opened the raster file, return the data
-    else:
-        # print 'Geotransform Elevation Data'
-        geotransform = data.GetGeoTransform()
-        xOrigin = geotransform[0]
-        yOrigin = geotransform[3]
-        pixelWidth = geotransform[1]
-        pixelHeight = geotransform[5]
-        # print 'Unpack Grid'
-        data.ReadAsArray()
-        cols = data.RasterXSize
-        rows = data.RasterYSize
-        bands = data.RasterCount
-        # print 'Grid Unpack Complete'
 
-    return (xOrigin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
+    geotransform = data.transform
+    xOrigin = geotransform[2]
+    yOrigin = geotransform[5]
+    pixelWidth = geotransform[0]
+    pixelHeight = geotransform[4]
+    bands = len(data.band) 
+
+    return xOrigin, yOrigin, pixelWidth, pixelHeight, bands, data
 
 
 def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
@@ -247,29 +234,26 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
 	'{path}' does not exist.'''.format(path=raster_path)
         raise Exception(error_msg)
 
-    # otherwise, get the raster metadata and data
-    else:
-        (xOrigin, yOrigin, pixelWidth, pixelHeight,
-         bands, rows, cols, data) = get_raster_metadata_and_data(raster_path)
-        xOffset = [int((v - xOrigin) / pixelWidth) if v < 0.0 else 'nan' for v in np.float64(lons)]
-        yOffset = [int((v - yOrigin) / pixelHeight) if v > 0.0 else 'nan' for v in np.float64(lats)]
+    (xOrigin, yOrigin, pixelWidth, pixelHeight,
+        bands, data) = get_raster_metadata_and_data(raster_path)
+    xOffset = [int((v - xOrigin) / pixelWidth) if v < 0.0 else 'nan' for v in np.float64(lons)]
+    yOffset = [int((v - yOrigin) / pixelHeight) if v > 0.0 else 'nan' for v in np.float64(lats)]
 
-        for val in range(len(lons)):
-            if xOffset[val] == 'nan':
-                # print 'passed'
-                elevation += [np.nan]
-            else:
+    for val in range(len(lons)):
+        if xOffset[val] == 'nan':
+            # print 'passed'
+            elevation += [np.nan]
+        else:
 
-                for i in range(bands):
-                    band = data.GetRasterBand(i + 1)  # 1-based index
-                    raster_data = band.ReadAsArray(xOffset[val], yOffset[val], 1, 1)
-                    if raster_data is not None:
-                        elev_ft = float(raster_data[0, 0]) * 3.28084
-                        elevation += [elev_ft]
-                    else:
-                        # print 'passed'
-                        elevation += [np.nan]
-        del data
+            for i in range(bands):
+                try:
+                    raster_data = data[i, yOffset[val], xOffset[val]]
+                except IndexError:
+                    elevation.append(np.nan)
+
+                elev_ft = float(raster_data) * 3.28084
+                elevation.append(elev_ft)
+                        
     return elevation
 
 
