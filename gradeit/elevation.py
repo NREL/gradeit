@@ -18,11 +18,6 @@ import scipy as sp
 from scipy import signal
 import warnings
 
-try:
-    from osgeo import gdal
-except ImportError:
-    import gdal
-
 import xarray as xr
 
 warnings.simplefilter('ignore')
@@ -190,8 +185,6 @@ def get_raster_metadata_and_data(raster_path):
     	(Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
     data = xr.open_rasterio(raster_path)
-
-    # otherwise, GDAL successfully opened the raster file, return the data
 
     geotransform = data.transform
     xOrigin = geotransform[2]
