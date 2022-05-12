@@ -8,7 +8,7 @@ import numpy as np
 # TODO: Add path to raster DB as an optional argument
 def gradeit(df=None, lat_col='lat', lon_col='lon', filtering=False, source='usgs-api',
             usgs_db_path='/backup/mbap_shared/NED_13/', des_sg = 17):
-
+    
     coordinates = list(zip(df[lat_col], df[lon_col]))
 
     # Run the appropriate elevation function based on user's desired data source
