@@ -1,12 +1,3 @@
-"""
-Append elevation to spatial data from a variety of sources including the USGS 
-public API, and a local version of the same USGS 1/3 arc-second data in the 
-form of a raster database.
-
-Contributors: Jacob Holden, Cory Kennedy, Eric Wood, Evan Burton
-"""
-
-import warnings
 from json import loads
 from pathlib import Path
 
@@ -15,11 +6,10 @@ import requests
 import xarray as xr
 from scipy import signal
 
-warnings.simplefilter("ignore")
-from .grade import get_distances
+from gradeit.grade import get_distances
 
 
-def usgs_api(df, sg_window, lat="lat", lon="lon", filter=False):
+def usgs_api(df, sg_window, lat="lat", lon="lon", apply_filter=False):
     """
     Look up elevation for every location in a dataframe by latitude, longitude
     coordinates. The source for the data is the public USGS API, which compiles
@@ -31,7 +21,7 @@ def usgs_api(df, sg_window, lat="lat", lon="lon", filter=False):
         lambda row: usgs_query_call(row[lat], row[lon]), axis=1
     )
 
-    if filter == True:
+    if apply_filter:
         df = _elevation_filter(sg_window, df, lat=lat, lon=lon)
 
     return df
@@ -75,26 +65,26 @@ def check_sg(sg_window, cumlDist):
     sg_default = int(round(df_filter))
     if sg_default % 2 == 0:
         sg_default += 1  # if even, transform to odd
-    print("Default SG computed: " + str(sg_default))
-    ####################################################
+    # print("Default SG computed: " + str(sg_default))
+
     # user inputs 0 to access the default value (see basic.py)
     if sg_window == 0:
-        print("Default SG window applied: " + str(sg_default))
+        # print("Default SG window applied: " + str(sg_default))
         return sg_default
     else:
         # checks the validility of the user defined window
         if sg_window % 2 == 0:
             sg_window += 1
-            print("SG window cannot be an even number.")
-            print("SG window modified: " + str(sg_window))
+            # print("SG window cannot be an even number.")
+            # print("SG window modified: " + str(sg_window))
         if (sg_window > len(cumlDist)) or (
             sg_window < 3
         ):  # sg_window must be greater than polyorder = 3 and less than df size
             sg_window = sg_default
-            print(
-                "SG window provided is greater than list length or less than polyorder."
-            )
-            print("Default SG window applied: " + str(sg_default))
+            # print(
+            #     "SG window provided is greater than list length or less than polyorder."
+            # )
+            # print("Default SG window applied: " + str(sg_default))
         return sg_window
 
 
@@ -232,10 +222,7 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
 
     # if the raster path doesn't get exist, throw an exception
     if not raster_path.exists():  # Path from pathlib
-        error_msg = """Invalid file path provided.
-	'{path}' does not exist.""".format(
-            path=raster_path
-        )
+        error_msg = f"The raster path {raster_path} does not exist."
         raise Exception(error_msg)
 
     (

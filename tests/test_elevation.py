@@ -38,7 +38,7 @@ class ElevTestApi(unittest.TestCase):
         filter the results
         """
         self.data = elevation.usgs_api(
-            self.data, sg_window=17, lat="lat", lon="lon", filter=False
+            self.data, sg_window=17, lat="lat", lon="lon", apply_filter=False
         )
 
         np.testing.assert_almost_equal(

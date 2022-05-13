@@ -15,9 +15,7 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
     # if neither distance or coordinates are provided raise an exception
     if coordinates is None and distances is None:
         raise Exception(
-            """
-	Either distance or coordinates must be provided to the get_grade() function.
-	"""
+            "Either distance or coordinates must be provided to the get_grade() function."
         )
 
     # if only coordinates are provided, calculate the distance array

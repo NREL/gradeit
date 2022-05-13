@@ -17,7 +17,7 @@ def gradeit(
     if source == "usgs-api":
 
         df = elevation.usgs_api(
-            df, lat=lat_col, lon=lon_col, filter=filtering, sg_window=des_sg
+            df, lat=lat_col, lon=lon_col, apply_filter=filtering, sg_window=des_sg
         )
 
     elif source == "usgs-local":
@@ -33,11 +33,7 @@ def gradeit(
 
     else:
         raise Exception(
-            """
-        Invalid elevation data source provided.
-        
-        Provide one of these options: ['usgs-api','usgs-local']
-        """
+            "Invalid elevation data source. Provide one of these options: ['usgs-api','usgs-local']"
         )
 
     # Cases where filtering is desired return both filtered and unfiltered results

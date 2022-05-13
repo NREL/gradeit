@@ -40,7 +40,6 @@ class GradeitTests(unittest.TestCase):
             ".data/caltrans_drvCycle_2345470_1_150pnts_usgs-local_INTEGRATION_SOLUTION.csv"
         )
 
-    # @unittest.skip("TODO: need to add test data")
     def test_usgs_api_no_filter(self):
         df_result = gradeit.gradeit(
             df=self.data,
