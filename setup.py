@@ -29,4 +29,9 @@ setuptools.setup(
         "rasterio",
         "scipy",
     ],
+    extras_require={
+        "plot": [
+            "matplotlib",
+        ],
+    },
 )
