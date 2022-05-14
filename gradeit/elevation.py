@@ -43,7 +43,9 @@ def usgs_query_call(lat, lon):
     )
     response_json = requests.get(query)
     results = loads(response_json.text)  # a dict containing the json data
-    elev = results["USGS_Elevation_Point_Query_Service"]["Elevation_Query"]["Elevation"]
+    elev = results["USGS_Elevation_Point_Query_Service"]["Elevation_Query"][
+        "Elevation"
+    ]
     elev = float(elev)
 
     return elev
@@ -52,7 +54,9 @@ def usgs_query_call(lat, lon):
 def check_sg(sg_window, cumlDist):
     # compute the default value of SG window.
     avg_spd = cumlDist[-1] / len(cumlDist)  # vehicle avg speed in ft/s
-    filter_width = 2500  # in [ft], width of the spike to be filtered (tentative)
+    filter_width = (
+        2500  # in [ft], width of the spike to be filtered (tentative)
+    )
     filter_factor = 5
     polyorder = 3  # fixed value, do not change!
     df_filter = round(
@@ -61,7 +65,9 @@ def check_sg(sg_window, cumlDist):
     if df_filter < polyorder:
         df_filter = polyorder + 2
     elif df_filter > len(cumlDist):
-        df_filter = len(cumlDist) * 0.75  # safeguard against crossing sg array size
+        df_filter = (
+            len(cumlDist) * 0.75
+        )  # safeguard against crossing sg array size
     sg_default = int(round(df_filter))
     if sg_default % 2 == 0:
         sg_default += 1  # if even, transform to odd
@@ -114,7 +120,9 @@ def _elevation_filter(sg_window, df, lat="lat", lon="lon"):
     return df
 
 
-def usgs_local_data(df, usgs_db_path, sg_window, lat="lat", lon="lon", filter=False):
+def usgs_local_data(
+    df, usgs_db_path, sg_window, lat="lat", lon="lon", filter=False
+):
     """
     Look up elevation for every location in a dataframe by latitude, longitude
     coordinates. The source data is a locally downloaded raster database
@@ -152,17 +160,29 @@ def get_raster_elev_profile(coordinates, usgs_db_path):
 
     # for each unique grid reference, find associated order, lat, lon, and elevation
     for uniq_ref in unique_grid_refs:
-        ts = [row_col[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
-        grid_lats = [lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
-        grid_lons = [lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
-        elevation = get_raster_elev_data(uniq_ref, grid_lats, grid_lons, usgs_db_path)
+        ts = [
+            row_col[i]
+            for i in range(len(grid_refs))
+            if grid_refs[i] == uniq_ref
+        ]
+        grid_lats = [
+            lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref
+        ]
+        grid_lons = [
+            lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref
+        ]
+        elevation = get_raster_elev_data(
+            uniq_ref, grid_lats, grid_lons, usgs_db_path
+        )
         elevation_full += elevation
         ts_full += ts
 
     # reorder the elevation values to match the order of the query coordinates
     ts_full, elevation_full = [
         list(x)
-        for x in zip(*sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0]))
+        for x in zip(
+            *sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0])
+        )
     ]
 
     return elevation_full
@@ -221,7 +241,7 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
     raster_path = Path(db_path / sub_path / "w001001.adf")  # Path from pathlib
 
     # if the raster path doesn't get exist, throw an exception
-    if not raster_path.exists():  
+    if not raster_path.exists():
         # could be using a different file format
         raster_path = db_path / f"{grid_ref}" / f"USGS_13_{grid_ref}.tif"
         if not raster_path.exists():
@@ -237,10 +257,12 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
         data,
     ) = get_raster_metadata_and_data(raster_path)
     xOffset = [
-        int((v - xOrigin) / pixelWidth) if v < 0.0 else "nan" for v in np.float64(lons)
+        int((v - xOrigin) / pixelWidth) if v < 0.0 else "nan"
+        for v in np.float64(lons)
     ]
     yOffset = [
-        int((v - yOrigin) / pixelHeight) if v > 0.0 else "nan" for v in np.float64(lats)
+        int((v - yOrigin) / pixelHeight) if v > 0.0 else "nan"
+        for v in np.float64(lats)
     ]
 
     for val in range(len(lons)):

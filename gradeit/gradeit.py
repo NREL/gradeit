@@ -17,7 +17,11 @@ def gradeit(
     if source == "usgs-api":
 
         df = elevation.usgs_api(
-            df, lat=lat_col, lon=lon_col, apply_filter=filtering, sg_window=des_sg
+            df,
+            lat=lat_col,
+            lon=lon_col,
+            apply_filter=filtering,
+            sg_window=des_sg,
         )
 
     elif source == "usgs-local":
