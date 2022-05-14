@@ -6,6 +6,7 @@
 # GradeIT functionality will be designed, demonstrated, and tested here
 
 import unittest
+
 import numpy as np
 import pandas as pd
 
@@ -26,7 +27,9 @@ class GradeitTests(unittest.TestCase):
             ".data/i70_10pnts_INTEGRATED_SOLUTION.csv"
         )
 
-        self.data_drvcyc = pd.read_csv(".data/caltrans_drvCycle_2345470_1_150pnts.csv")
+        self.data_drvcyc = pd.read_csv(
+            ".data/caltrans_drvCycle_2345470_1_150pnts.csv"
+        )
 
         self.filter_api_desired_df = pd.read_csv(
             ".data/caltrans_drvCycle_2345470_1_150pnts_INTEGRATION_SOLUTION.csv"
@@ -49,7 +52,9 @@ class GradeitTests(unittest.TestCase):
             source="usgs-api",
         )
 
-        pd.testing.assert_frame_equal(df_result, self.unfiltered_api_desired_df)
+        pd.testing.assert_frame_equal(
+            df_result, self.unfiltered_api_desired_df
+        )
 
     def test_usgs_api_with_filter(self):
         df_result = gradeit.gradeit(
@@ -71,7 +76,9 @@ class GradeitTests(unittest.TestCase):
             source="usgs-local",
         )
 
-        pd.testing.assert_frame_equal(df_result, self.unfiltered_local_desired_df)
+        pd.testing.assert_frame_equal(
+            df_result, self.unfiltered_local_desired_df
+        )
 
     def test_usgs_local_with_filter(self):
         df_result = gradeit.gradeit(
@@ -87,7 +94,13 @@ class GradeitTests(unittest.TestCase):
     def test_source_exception(self):
         # Test that an exception is raised if invalid data source is provided
         self.assertRaises(
-            Exception, gradeit.gradeit, self.data_drvcyc, "lat", "lon", True, "Google"
+            Exception,
+            gradeit.gradeit,
+            self.data_drvcyc,
+            "lat",
+            "lon",
+            True,
+            "Google",
         )
 
 

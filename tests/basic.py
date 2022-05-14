@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from gradeit.gradeit import gradeit
 from gradeit.filter_bridge import gradeCorrection_bridge
+from gradeit.gradeit import gradeit
 
 # import gradeit.elevation as elevation
 
@@ -37,10 +37,10 @@ sg_val = 5  # Desired SG window # use 0 for default value
 
 # choose bridge filter
 bridge_filter = True
-extension = 0.5  # in miles, extension around the edges of the bridge to be filtered
-bridge_len = (
-    2500  # in ft., minimum length of the bridge to be considered within the route
+extension = (
+    0.5  # in miles, extension around the edges of the bridge to be filtered
 )
+bridge_len = 2500  # in ft., minimum length of the bridge to be considered within the route
 bridge_param = [extension, bridge_len, general_filter]
 
 # choose plotting option

@@ -1,4 +1,5 @@
 import unittest
+
 import numpy as np
 import pandas as pd
 
@@ -78,7 +79,9 @@ class GradeTest(unittest.TestCase):
         coordinates = list(zip(self.data.lat, self.data.lon))
         dist_arr = grade.get_distances(coordinates)
 
-        np.testing.assert_array_equal(dist_arr, np.array(self.data.dist_ft[1:]))
+        np.testing.assert_array_equal(
+            dist_arr, np.array(self.data.dist_ft[1:])
+        )
 
     def test_get_grade_from_coords(self):
         coordinates = list(zip(self.data.lat, self.data.lon))
