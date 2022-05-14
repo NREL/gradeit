@@ -221,9 +221,12 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
     raster_path = Path(db_path / sub_path / "w001001.adf")  # Path from pathlib
 
     # if the raster path doesn't get exist, throw an exception
-    if not raster_path.exists():  # Path from pathlib
-        error_msg = f"The raster path {raster_path} does not exist."
-        raise Exception(error_msg)
+    if not raster_path.exists():  
+        # could be using a different file format
+        raster_path = db_path / f"{grid_ref}" / f"USGS_13_{grid_ref}.tif"
+        if not raster_path.exists():
+            error_msg = f"The raster path {raster_path} does not exist."
+            raise Exception(error_msg)
 
     (
         xOrigin,
