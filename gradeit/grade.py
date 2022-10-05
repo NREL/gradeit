@@ -1,9 +1,6 @@
-"""Module contains functionality associated with grade profiles."""
+from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
-# NOTE: temporary for functon i/o testing
-from numpy.random import randint
 import numpy as np
-from math import radians, degrees, cos, sin, asin, atan2, sqrt
 
 
 def get_grade(elev_ft_arr, coordinates=None, distances=None):
@@ -11,14 +8,14 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
 
     # check that n > 1
     if len(elev_ft_arr) < 2:
-        raise ValueError('Determining grade requires at least 2 coordinates\n\t\ti.e. Input size of n > 1')
+        raise ValueError(
+            "Determining grade requires at least 2 coordinates\n\t\ti.e. Input size of n > 1"
+        )
 
     # if neither distance or coordinates are provided raise an exception
     if coordinates is None and distances is None:
         raise Exception(
-            '''
-	Either distance or coordinates must be provided to the get_grade() function.
-	'''
+            "Either distance or coordinates must be provided to the get_grade() function."
         )
 
     # if only coordinates are provided, calculate the distance array
@@ -55,13 +52,13 @@ def get_distances(coordinates):
 
 
 def haversine(lat1, lon1, lat2, lon2, get_bearing=False):
-    """ 
+    """
     Calculates the great circle distance and bearing (if requested)
     between two points on the earth's surface
 
     args: lat1, lon1, lat2, lon2
         The arguments are latitude and longitude (in degree decimal format)
-	coordinates
+        coordinates
 
     kwargs: get_bearing
         False by default, when set to True, haversine returns bearing as well

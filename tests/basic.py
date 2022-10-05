@@ -1,11 +1,8 @@
-import sys
 import numpy as np
 import pandas as pd
 
-sys.path.append('../')
-from gradeit.gradeit import gradeit
 from gradeit.filter_bridge import gradeCorrection_bridge
-from gradeit.visualization import plot_data
+from gradeit.gradeit import gradeit
 
 # import gradeit.elevation as elevation
 
@@ -15,8 +12,8 @@ from gradeit.visualization import plot_data
 # import lat lon data for processing
 data = pd.DataFrame()
 # discretized lat/lon for testing
-data['lat'] = np.linspace(39.702730, 39.595368, 20)
-data['lon'] = np.linspace(-105.245678, -105.109049, 20)
+data["lat"] = np.linspace(39.702730, 39.595368, 20)
+data["lon"] = np.linspace(-105.245678, -105.109049, 20)
 
 # actual lat/lon for testing
 # df_truck = pd.read_csv('data/SF_bridge_trip_segment.csv')
@@ -40,7 +37,9 @@ sg_val = 5  # Desired SG window # use 0 for default value
 
 # choose bridge filter
 bridge_filter = True
-extension = 0.5  # in miles, extension around the edges of the bridge to be filtered
+extension = (
+    0.5  # in miles, extension around the edges of the bridge to be filtered
+)
 bridge_len = 2500  # in ft., minimum length of the bridge to be considered within the route
 bridge_param = [extension, bridge_len, general_filter]
 
@@ -59,16 +58,29 @@ save_df = False
 #################################################################################################
 # write grade info to csv file
 def save_data(df):
-    df.to_csv(r'file_name.csv', index=False)
+    df.to_csv(r"file_name.csv", index=False)
     print("Data saved.")
 
 
 if api:
-    df_grade = gradeit(df=data, lat_col='lat', lon_col='lon', filtering=general_filter, source='usgs-api',
-                       des_sg=sg_val)
+    df_grade = gradeit(
+        df=data,
+        lat_col="lat",
+        lon_col="lon",
+        filtering=general_filter,
+        source="usgs-api",
+        des_sg=sg_val,
+    )
 elif local:
-    df_grade = gradeit(df=data, lat_col='lat', lon_col='lon', filtering=general_filter, source='usgs-local',
-                       usgs_db_path=db_path, des_sg=sg_val)
+    df_grade = gradeit(
+        df=data,
+        lat_col="lat",
+        lon_col="lon",
+        filtering=general_filter,
+        source="usgs-local",
+        usgs_db_path=db_path,
+        des_sg=sg_val,
+    )
 print(df_grade.head())
 
 if bridge_filter:

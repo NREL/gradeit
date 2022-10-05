@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="gradeit",
-    version="0.0.1",
+    version="0.1.1",
     author="National Renewable Energy Laboratory",
     author_email="Jacob.Holden@nrel.gov",
     description="Road Grade Inference Tool (GradeIT) appends elevation and road grade to a sequence of GPS points.",
@@ -15,7 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: BSD 3-Clause License",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering"
@@ -29,4 +29,9 @@ setuptools.setup(
         "rasterio",
         "scipy",
     ],
+    extras_require={
+        "plot": [
+            "matplotlib",
+        ],
+    },
 )
