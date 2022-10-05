@@ -28,5 +28,6 @@ setuptools.setup(
         "requests",
         "rasterio",
         "scipy",
+        "tqdm",
     ],
 )
