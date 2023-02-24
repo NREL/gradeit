@@ -269,7 +269,6 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
         if xOffset[val] == "nan":
             elevation += [np.nan]
         else:
-
             for i in range(bands):
                 try:
                     raster_data = data[i, yOffset[val], xOffset[val]]

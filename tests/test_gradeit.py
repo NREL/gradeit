@@ -15,7 +15,6 @@ from gradeit import gradeit
 
 @unittest.skip("TODO: need to add test data")
 class GradeitTests(unittest.TestCase):
-
     # Load desired solution CSVs from /tests/.data directory
     # Solutions are for both 10 point sequence on I-70 and 150 point drive cycle sample
     def setUp(self):

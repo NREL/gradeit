@@ -10,12 +10,10 @@ def gradeit(
     usgs_db_path="/backup/mbap_shared/NED_13/",
     des_sg=17,
 ):
-
     coordinates = list(zip(df[lat_col], df[lon_col]))
 
     # Run the appropriate elevation function based on user's desired data source
     if source == "usgs-api":
-
         df = elevation.usgs_api(
             df,
             lat=lat_col,
@@ -25,7 +23,6 @@ def gradeit(
         )
 
     elif source == "usgs-local":
-
         df = elevation.usgs_local_data(
             df,
             usgs_db_path=usgs_db_path,
