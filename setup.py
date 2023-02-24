@@ -18,9 +18,9 @@ setuptools.setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Intended Audience :: Science/Research",
-        "Topic :: Scientific/Engineering"
+        "Topic :: Scientific/Engineering",
     ],
-    python_requires='>=3.8',
+    python_requires=">=3.8",
     install_requires=[
         "xarray",
         "numpy",
