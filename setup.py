@@ -26,7 +26,7 @@ setuptools.setup(
         "numpy",
         "pandas",
         "requests",
-        "rasterio",
+        "rasterio<1.3",
         "scipy",
         "tqdm",
     ],
