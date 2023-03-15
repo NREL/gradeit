@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import requests
-import xarray as xr
+import rasterio 
 from scipy import signal
 
 from gradeit.grade import get_distances
@@ -201,16 +201,16 @@ def get_raster_metadata_and_data(raster_path):
         a tuple containing the following metadata and data
         (Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
-    data = xr.open_rasterio(raster_path)
+    data_reader = rasterio.open(raster_path)
 
-    geotransform = data.transform
+    geotransform = data_reader.transform
     xOrigin = geotransform[2]
     yOrigin = geotransform[5]
     pixelWidth = geotransform[0]
     pixelHeight = geotransform[4]
-    bands = len(data.band)
+    bands = data_reader.indexes
 
-    return xOrigin, yOrigin, pixelWidth, pixelHeight, bands, data
+    return xOrigin, yOrigin, pixelWidth, pixelHeight, bands, data_reader
 
 
 def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
@@ -220,7 +220,7 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
     from raster data into geo-referenced, human-readable, elevation data.
 
     Parameters:
-        a grid refernce ID string, an iterable of longitude float values,
+        a grid reference ID string, an iterable of longitude float values,
         and an iterable of latitude float values
         float value that mark the position of the elevation query
     Returns:
@@ -228,25 +228,14 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
     """
     elevation = []
 
-    # path to arnaud's raster database
-    # db_path = Path("/backup/mbap_shared/NED_13/") # Path from pathlib lbrary
-    # db_path = Path("/Volumes/ssh/backup/mbap_shared/NED_13/")
     db_path = Path(usgs_db_path)
 
-    # path from database top level down to raster file
-    sub_path = (
-        Path() / "grid" / grid_ref / ("grd" + grid_ref + "_13")
-    )  # Path from pathlib
-    # complete path
-    raster_path = Path(db_path / sub_path / "w001001.adf")  # Path from pathlib
+    raster_path = db_path / f"{grid_ref}" / f"USGS_13_{grid_ref}.tif"
 
     # if the raster path doesn't get exist, throw an exception
     if not raster_path.exists():
-        # could be using a different file format
-        raster_path = db_path / f"{grid_ref}" / f"USGS_13_{grid_ref}.tif"
-        if not raster_path.exists():
-            error_msg = f"The raster path {raster_path} does not exist."
-            raise Exception(error_msg)
+        error_msg = f"The raster path {raster_path} does not exist."
+        raise Exception(error_msg)
 
     (
         xOrigin,
@@ -264,14 +253,15 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
         int((v - yOrigin) / pixelHeight) if v > 0.0 else "nan"
         for v in np.float64(lats)
     ]
+    band_data = [data.read(b) for b in bands]
 
     for val in range(len(lons)):
         if xOffset[val] == "nan":
             elevation += [np.nan]
         else:
-            for i in range(bands):
+            for band in band_data:
                 try:
-                    raster_data = data[i, yOffset[val], xOffset[val]]
+                    raster_data = band[yOffset[val], xOffset[val]]
                 except IndexError:
                     elevation.append(np.nan)
 
