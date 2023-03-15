@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import requests
-import rasterio 
+import rasterio
 from scipy import signal
 
 from gradeit.grade import get_distances
