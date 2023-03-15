@@ -32,21 +32,16 @@ def usgs_query_call(lat, lon):
     Build and run the query to the USGS API endpoint
     """
 
-    URL = "https://nationalmap.gov/epqs/pqs.php"
+    URL = "https://epqs.nationalmap.gov/v1/"
     lat = str(lat)
     lon = str(lon)
     UNITS = "feet"
     OUTPUT = "json"
 
-    query = "{url}?x={lon}&y={lat}&units={units}&output={output}".format(
-        url=URL, lon=lon, lat=lat, units=UNITS, output=OUTPUT
-    )
+    query = f"{URL}{OUTPUT}?x={lon}&y={lat}&units={UNITS}&wkid=4326&includeDate=False"
     response_json = requests.get(query)
     results = loads(response_json.text)  # a dict containing the json data
-    elev = results["USGS_Elevation_Point_Query_Service"]["Elevation_Query"][
-        "Elevation"
-    ]
-    elev = float(elev)
+    elev = float(results["value"])
 
     return elev
 
