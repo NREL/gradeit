@@ -22,13 +22,9 @@ class GradeitTests(unittest.TestCase):
         self.data["lat"] = np.linspace(39.702730, 39.695368, 10)
         self.data["lon"] = np.linspace(-105.245678, -105.209049, 10)
 
-        self.unfiltered_api_desired_df = pd.read_csv(
-            ".data/i70_10pnts_INTEGRATED_SOLUTION.csv"
-        )
+        self.unfiltered_api_desired_df = pd.read_csv(".data/i70_10pnts_INTEGRATED_SOLUTION.csv")
 
-        self.data_drvcyc = pd.read_csv(
-            ".data/caltrans_drvCycle_2345470_1_150pnts.csv"
-        )
+        self.data_drvcyc = pd.read_csv(".data/caltrans_drvCycle_2345470_1_150pnts.csv")
 
         self.filter_api_desired_df = pd.read_csv(
             ".data/caltrans_drvCycle_2345470_1_150pnts_INTEGRATION_SOLUTION.csv"
@@ -51,9 +47,7 @@ class GradeitTests(unittest.TestCase):
             source="usgs-api",
         )
 
-        pd.testing.assert_frame_equal(
-            df_result, self.unfiltered_api_desired_df
-        )
+        pd.testing.assert_frame_equal(df_result, self.unfiltered_api_desired_df)
 
     def test_usgs_api_with_filter(self):
         df_result = gradeit.gradeit(
@@ -75,9 +69,7 @@ class GradeitTests(unittest.TestCase):
             source="usgs-local",
         )
 
-        pd.testing.assert_frame_equal(
-            df_result, self.unfiltered_local_desired_df
-        )
+        pd.testing.assert_frame_equal(df_result, self.unfiltered_local_desired_df)
 
     def test_usgs_local_with_filter(self):
         df_result = gradeit.gradeit(

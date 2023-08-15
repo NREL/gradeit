@@ -17,9 +17,7 @@ def usgs_api(df, sg_window, lat="lat", lon="lon", apply_filter=False):
 
     More information is available at https://nationalmap.gov/epqs/
     """
-    df["elevation_ft"] = df.apply(
-        lambda row: usgs_query_call(row[lat], row[lon]), axis=1
-    )
+    df["elevation_ft"] = df.apply(lambda row: usgs_query_call(row[lat], row[lon]), axis=1)
 
     if apply_filter:
         df = _elevation_filter(sg_window, df, lat=lat, lon=lon)
@@ -49,9 +47,7 @@ def usgs_query_call(lat, lon):
 def check_sg(sg_window, cumlDist):
     # compute the default value of SG window.
     avg_spd = cumlDist[-1] / len(cumlDist)  # vehicle avg speed in ft/s
-    filter_width = (
-        2500  # in [ft], width of the spike to be filtered (tentative)
-    )
+    filter_width = 2500  # in [ft], width of the spike to be filtered (tentative)
     filter_factor = 5
     polyorder = 3  # fixed value, do not change!
     df_filter = round(
@@ -60,9 +56,7 @@ def check_sg(sg_window, cumlDist):
     if df_filter < polyorder:
         df_filter = polyorder + 2
     elif df_filter > len(cumlDist):
-        df_filter = (
-            len(cumlDist) * 0.75
-        )  # safeguard against crossing sg array size
+        df_filter = len(cumlDist) * 0.75  # safeguard against crossing sg array size
     sg_default = int(round(df_filter))
     if sg_default % 2 == 0:
         sg_default += 1  # if even, transform to odd
@@ -105,9 +99,7 @@ def _elevation_filter(sg_window, df, lat="lat", lon="lon"):
     sg_window = check_sg(sg_window, cuml_dist)
 
     # run SavGol filter
-    elev_linear_sg = signal.savgol_filter(
-        df["elevation_ft"], window_length=sg_window, polyorder=3
-    )
+    elev_linear_sg = signal.savgol_filter(df["elevation_ft"], window_length=sg_window, polyorder=3)
 
     df["cumulative_original_distance_ft"] = cuml_dist
     df["elevation_ft_filtered"] = elev_linear_sg
@@ -115,9 +107,7 @@ def _elevation_filter(sg_window, df, lat="lat", lon="lon"):
     return df
 
 
-def usgs_local_data(
-    df, usgs_db_path, sg_window, lat="lat", lon="lon", filter=False
-):
+def usgs_local_data(df, usgs_db_path, sg_window, lat="lat", lon="lon", filter=False):
     """
     Look up elevation for every location in a dataframe by latitude, longitude
     coordinates. The source data is a locally downloaded raster database
@@ -155,29 +145,16 @@ def get_raster_elev_profile(coordinates, usgs_db_path):
 
     # for each unique grid reference, find associated order, lat, lon, and elevation
     for uniq_ref in unique_grid_refs:
-        ts = [
-            row_col[i]
-            for i in range(len(grid_refs))
-            if grid_refs[i] == uniq_ref
-        ]
-        grid_lats = [
-            lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref
-        ]
-        grid_lons = [
-            lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref
-        ]
-        elevation = get_raster_elev_data(
-            uniq_ref, grid_lats, grid_lons, usgs_db_path
-        )
+        ts = [row_col[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        grid_lats = [lats[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        grid_lons = [lons[i] for i in range(len(grid_refs)) if grid_refs[i] == uniq_ref]
+        elevation = get_raster_elev_data(uniq_ref, grid_lats, grid_lons, usgs_db_path)
         elevation_full += elevation
         ts_full += ts
 
     # reorder the elevation values to match the order of the query coordinates
     ts_full, elevation_full = [
-        list(x)
-        for x in zip(
-            *sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0])
-        )
+        list(x) for x in zip(*sorted(zip(ts_full, elevation_full), key=lambda pair: pair[0]))
     ]
 
     return elevation_full
@@ -240,14 +217,8 @@ def get_raster_elev_data(grid_ref, lats, lons, usgs_db_path):
         bands,
         data,
     ) = get_raster_metadata_and_data(raster_path)
-    xOffset = [
-        int((v - xOrigin) / pixelWidth) if v < 0.0 else "nan"
-        for v in np.float64(lons)
-    ]
-    yOffset = [
-        int((v - yOrigin) / pixelHeight) if v > 0.0 else "nan"
-        for v in np.float64(lats)
-    ]
+    xOffset = [int((v - xOrigin) / pixelWidth) if v < 0.0 else "nan" for v in np.float64(lons)]
+    yOffset = [int((v - yOrigin) / pixelHeight) if v > 0.0 else "nan" for v in np.float64(lats)]
     band_data = [data.read(b) for b in bands]
 
     for val in range(len(lons)):

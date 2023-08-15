@@ -6,18 +6,14 @@ import requests
 
 from tqdm import tqdm
 
-LINK_BASE = (
-    "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/current"
-)
+LINK_BASE = "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/current"
 THIS_DIR = Path(__file__).parent
 
 parser = argparse.ArgumentParser(
     description="Download the 1/3 arc second elevation tiles from USGS"
 )
 
-parser.add_argument(
-    "output_directory", help="Where should we write the tiles to?"
-)
+parser.add_argument("output_directory", help="Where should we write the tiles to?")
 
 
 def build_link(tile: str) -> str:

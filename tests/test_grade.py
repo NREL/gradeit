@@ -62,9 +62,7 @@ class GradeTest(unittest.TestCase):
         ]
 
     def test_haversine_no_bearing(self):
-        dist = grade.haversine(
-            self.lat1, self.lon1, self.lat2, self.lon2, get_bearing=False
-        )
+        dist = grade.haversine(self.lat1, self.lon1, self.lat2, self.lon2, get_bearing=False)
 
         self.assertEqual(dist, self.expected_dist_km)
 
@@ -79,15 +77,11 @@ class GradeTest(unittest.TestCase):
         coordinates = list(zip(self.data.lat, self.data.lon))
         dist_arr = grade.get_distances(coordinates)
 
-        np.testing.assert_array_equal(
-            dist_arr, np.array(self.data.dist_ft[1:])
-        )
+        np.testing.assert_array_equal(dist_arr, np.array(self.data.dist_ft[1:]))
 
     def test_get_grade_from_coords(self):
         coordinates = list(zip(self.data.lat, self.data.lon))
-        dist_arr, grade_arr = grade.get_grade(
-            self.data.elev_ft, coordinates=coordinates
-        )
+        dist_arr, grade_arr = grade.get_grade(self.data.elev_ft, coordinates=coordinates)
 
         np.testing.assert_array_equal(dist_arr, self.data.dist_ft[1:])
         np.testing.assert_array_equal(grade_arr, self.data.grade_dec)

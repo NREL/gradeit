@@ -25,9 +25,7 @@ data["lat"] = np.linspace(39.702730, 39.595368, 20)
 data["lon"] = np.linspace(-105.245678, -105.109049, 20)
 
 # append elevation and grade from the USGS web-api
-df_grade = gradeit(
-    df=data, lat_col="lat", lon_col="lon", filtering=True, source="usgs-api"
-)
+df_grade = gradeit(df=data, lat_col="lat", lon_col="lon", filtering=True, source="usgs-api")
 end = time.time()
 print(f"Time elapsed: {end-start} seconds")
 
