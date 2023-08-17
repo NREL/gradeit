@@ -49,7 +49,8 @@ NREL has the 1/3 arc-second raster data downloaded to on-site compute resources 
 This repository comes with a script you can use to download all of the tiles. You can use the script like this:
 
 ```bash
-python scripts/get_usgs_tiles.py path/to/output/
+export OUTPUT_DIR=path/to/output/
+python scripts/get_usgs_tiles.py
 ```
 
 The script will then proceed to download all tiles into `path/to/output/` which can be used when running gradeit:

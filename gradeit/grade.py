@@ -1,6 +1,9 @@
 from math import asin, atan2, cos, degrees, radians, sin, sqrt
+from typing import List
 
 import numpy as np
+
+from gradeit.coordinate import Coordinate
 
 
 def get_grade(elev_ft_arr, coordinates=None, distances=None):
@@ -34,16 +37,19 @@ def get_grade(elev_ft_arr, coordinates=None, distances=None):
     return d_dist, grade
 
 
-def get_distances(coordinates):
+def get_distances(coordinates: List[Coordinate]) -> List[float]:
+    """
+    Compute the distance between each coordinate pair
+    """
     FT_PER_KM = 3280.84
     # place a zero up front
     distances = []
     i = 1
     while i < len(coordinates):
-        lat1 = coordinates[i - 1][0]
-        lon1 = coordinates[i - 1][1]
-        lat2 = coordinates[i][0]
-        lon2 = coordinates[i][1]
+        lat1 = coordinates[i - 1].latitude
+        lon1 = coordinates[i - 1].longitude
+        lat2 = coordinates[i].latitude
+        lon2 = coordinates[i].longitude
         dist_ft = haversine(lat1, lon1, lat2, lon2) * FT_PER_KM
         distances += [dist_ft]
         i += 1

@@ -1,129 +1,32 @@
-from json import loads
 from pathlib import Path
+from typing import List
 
 import numpy as np
-import requests
-import rasterio
-from scipy import signal
+import rasterio as rio
 
-from gradeit.grade import get_distances
+from gradeit.coordinate import Coordinate
+from gradeit.elevation.elevation_model import ElevationModel
 
 
-def usgs_api(df, sg_window, lat="lat", lon="lon", apply_filter=False):
+class USGSLocal(ElevationModel):
     """
-    Look up elevation for every location in a dataframe by latitude, longitude
-    coordinates. The source for the data is the public USGS API, which compiles
-    and serves data from the 1/3 arc-second Digital Elevation Model.
-
-    More information is available at https://nationalmap.gov/epqs/
-    """
-    df["elevation_ft"] = df.apply(lambda row: usgs_query_call(row[lat], row[lon]), axis=1)
-
-    if apply_filter:
-        df = _elevation_filter(sg_window, df, lat=lat, lon=lon)
-
-    return df
-
-
-def usgs_query_call(lat, lon):
-    """
-    Build and run the query to the USGS API endpoint
-    """
-
-    URL = "https://epqs.nationalmap.gov/v1/"
-    lat = str(lat)
-    lon = str(lon)
-    UNITS = "feet"
-    OUTPUT = "json"
-
-    query = f"{URL}{OUTPUT}?x={lon}&y={lat}&units={UNITS}&wkid=4326&includeDate=False"
-    response_json = requests.get(query)
-    results = loads(response_json.text)  # a dict containing the json data
-    elev = float(results["value"])
-
-    return elev
-
-
-def check_sg(sg_window, cumlDist):
-    # compute the default value of SG window.
-    avg_spd = cumlDist[-1] / len(cumlDist)  # vehicle avg speed in ft/s
-    filter_width = 2500  # in [ft], width of the spike to be filtered (tentative)
-    filter_factor = 5
-    polyorder = 3  # fixed value, do not change!
-    df_filter = round(
-        filter_width / avg_spd * filter_factor
-    )  # (estimated formula, change filter_width and filter_factor to get desired effect)
-    if df_filter < polyorder:
-        df_filter = polyorder + 2
-    elif df_filter > len(cumlDist):
-        df_filter = len(cumlDist) * 0.75  # safeguard against crossing sg array size
-    sg_default = int(round(df_filter))
-    if sg_default % 2 == 0:
-        sg_default += 1  # if even, transform to odd
-    # print("Default SG computed: " + str(sg_default))
-
-    # user inputs 0 to access the default value (see basic.py)
-    if sg_window == 0:
-        # print("Default SG window applied: " + str(sg_default))
-        return sg_default
-    else:
-        # checks the validility of the user defined window
-        if sg_window % 2 == 0:
-            sg_window += 1
-            # print("SG window cannot be an even number.")
-            # print("SG window modified: " + str(sg_window))
-        if (sg_window > len(cumlDist)) or (
-            sg_window < 3
-        ):  # sg_window must be greater than polyorder = 3 and less than df size
-            sg_window = sg_default
-            # print(
-            #     "SG window provided is greater than list length or less than polyorder."
-            # )
-            # print("Default SG window applied: " + str(sg_default))
-        return sg_window
-
-
-def _elevation_filter(sg_window, df, lat="lat", lon="lon"):
-    """
-    This implementation applies the SG filter in the temporal domain
-    as opposed to the spatial domain. Filtering spatially requires
-    error-proned resampling of the elevation signal to match a uniform
-    distance between each point.
-    """
-
-    coordinates = list(zip(df[lat], df[lon]))
-    distances = get_distances(coordinates)
-    cuml_dist = np.append(0, np.cumsum(distances))
-
-    # note: run final check on user SG value, provide default value if necessary
-    sg_window = check_sg(sg_window, cuml_dist)
-
-    # run SavGol filter
-    elev_linear_sg = signal.savgol_filter(df["elevation_ft"], window_length=sg_window, polyorder=3)
-
-    df["cumulative_original_distance_ft"] = cuml_dist
-    df["elevation_ft_filtered"] = elev_linear_sg
-
-    return df
-
-
-def usgs_local_data(df, usgs_db_path, sg_window, lat="lat", lon="lon", filter=False):
-    """
-    Look up elevation for every location in a dataframe by latitude, longitude
+    An elevation model to look up elevation by latitude, longitude
     coordinates. The source data is a locally downloaded raster database
     containing the USGS 1/3 arc-second Digital Elevation Model.
     """
 
-    coordinates = list(zip(df[lat], df[lon]))
-    df["elevation_ft"] = get_raster_elev_profile(coordinates, usgs_db_path)
+    usgs_db_path: str
 
-    if filter:
-        df = _elevation_filter(sg_window, df, lat=lat, lon=lon)
+    def __init__(self, usgs_db_path: str):
+        self.usgs_db_path = usgs_db_path
 
-    return df
+    def get_elevation(self, trace: List[Coordinate]) -> List[float]:
+        elevation = get_raster_elev_profile(trace, self.usgs_db_path)
+
+        return elevation
 
 
-def get_raster_elev_profile(coordinates, usgs_db_path):
+def get_raster_elev_profile(coordinates: List[Coordinate], usgs_db_path):
     """
     This function takes latitude and longitude values, of coordinate pairs
     and returns an elevation profile from the raster database on the
@@ -135,8 +38,8 @@ def get_raster_elev_profile(coordinates, usgs_db_path):
     Return value:
         A list of elevation float values from the raster database.
     """
-    lats = [coord[0] for coord in coordinates]
-    lons = [coord[1] for coord in coordinates]
+    lats = [coord.latitude for coord in coordinates]
+    lons = [coord.longitude for coord in coordinates]
     elevation_full = []
     ts_full = []  # track query order
     grid_refs = build_grid_refs(lats, lons)
@@ -173,7 +76,7 @@ def get_raster_metadata_and_data(raster_path):
         a tuple containing the following metadata and data
         (Origin, yOrigin, pixelWidth, pixelHeight, bands, rows, cols, data)
     """
-    data_reader = rasterio.open(raster_path)
+    data_reader = rio.open(raster_path)
 
     geotransform = data_reader.transform
     xOrigin = geotransform[2]

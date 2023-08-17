@@ -1,19 +1,18 @@
 from pathlib import Path
+from mpire import WorkerPool
 
-import argparse
+import os
 
 import requests
 
-from tqdm import tqdm
 
 LINK_BASE = "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/current"
-THIS_DIR = Path(__file__).parent
+OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "usgs_tiles"))
+TILE_DATA = Path(os.environ.get("TILE_DATA", "usgs_tiles.txt"))
+NPROCS = int(os.environ.get("NPROCS", 4))
 
-parser = argparse.ArgumentParser(
-    description="Download the 1/3 arc second elevation tiles from USGS"
-)
-
-parser.add_argument("output_directory", help="Where should we write the tiles to?")
+if not OUTPUT_DIR.exists():
+    OUTPUT_DIR.mkdir(parents=True)
 
 
 def build_link(tile: str) -> str:
@@ -21,7 +20,9 @@ def build_link(tile: str) -> str:
     return link
 
 
-def download_file(url: str, destination: Path):
+def download_file(tile: str):
+    url = build_link(tile)
+    destination = OUTPUT_DIR / f"{tile}" / f"USGS_13_{tile}.tif"
     if destination.is_file():
         print(f"{str(destination)} already exists, skipping")
         return
@@ -38,18 +39,13 @@ def download_file(url: str, destination: Path):
 
 
 def run():
-    args = parser.parse_args()
-    outdir = Path(args.output_directory)
-    tile_data = THIS_DIR / "usgs_tiles.txt"
-    with tile_data.open("r") as f:
+    with TILE_DATA.open("r") as f:
         tiles = [l.strip() for l in f.readlines()]
 
     print("downloading tiles..")
-    for tile in tqdm(tiles):
-        link = build_link(tile)
-        outfile = outdir / f"{tile}" / f"USGS_13_{tile}.tif"
 
-        download_file(link, outfile)
+    with WorkerPool(NPROCS) as p:
+        p.map(download_file, tiles, progress_bar=True)
 
 
 if __name__ == "__main__":
