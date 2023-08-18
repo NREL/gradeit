@@ -40,7 +40,7 @@ def download_file(tile: str):
 
 def run():
     with TILE_DATA.open("r") as f:
-        tiles = [l.strip() for l in f.readlines()]
+        tiles = [line.strip() for line in f.readlines()]
 
     print("downloading tiles..")
 

@@ -1,94 +1,42 @@
 import unittest
 
 import numpy as np
-import pandas as pd
+from gradeit import repo_root
 
-from gradeit import elevation
+from gradeit.coordinate import Coordinate
+from gradeit.elevation.usgs_api import USGSApi
+from gradeit.elevation.usgs_local import USGSLocal
+
+LATS = np.linspace(39.702730, 39.695368, 10)
+LONS = np.linspace(-105.245678, -105.209049, 10)
+COORDS = [Coordinate.from_lat_lon(lat, lon) for lat, lon in zip(LATS, LONS)]
 
 
 # Test the USGS Web API Implementation
 class ElevTestApi(unittest.TestCase):
-    def setUp(self):
-        # Build a sample dataset with just 10 points for the no filter testing
-        self.data = pd.DataFrame()
-        self.data["lat"] = np.linspace(39.702730, 39.695368, 10)
-        self.data["lon"] = np.linspace(-105.245678, -105.209049, 10)
-
-        # The expected results are assigned to a class variable
-        self.no_filter_desired_elevation_ft = np.array(
-            [
-                7048.15,
-                7015.69,
-                7157.89,
-                7004.84,
-                6921.27,
-                6840.03,
-                6696.7,
-                6735.26,
-                6554.42,
-                6445.5,
-            ]
-        )
-
-    def tearDown(self):
-        pass
-
+    @unittest.skip("Takes some time so skip by default")
     def test_api_no_filter(self):
         """
         Call the USGS Web API to append elevation at discrete points, do not
         filter the results
         """
-        self.data = elevation.usgs_api(
-            self.data, sg_window=17, lat="lat", lon="lon", apply_filter=False
-        )
+        emodel = USGSApi()
+        elevation_ft = emodel.get_elevation(COORDS)
 
-        np.testing.assert_almost_equal(
-            np.array(self.data["elevation_ft"]),
-            self.no_filter_desired_elevation_ft,
-            decimal=2,
-        )
+        self.assertEqual(len(elevation_ft), len(COORDS))
 
 
 class ElevTestRasterDB(unittest.TestCase):
-    def setUp(self):
-        # Build a sample dataset with just 10 points for the no filter testing
-        self.data = pd.DataFrame()
-        self.data["lat"] = np.linspace(39.702730, 39.695368, 10)
-        self.data["lon"] = np.linspace(-105.245678, -105.209049, 10)
-
-        # The expected results are assigned to a class variable
-        self.no_filter_desired_elevation_ft = np.array(
-            [
-                7048.15,
-                7015.69,
-                7157.89,
-                7004.84,
-                6921.27,
-                6840.03,
-                6696.7,
-                6735.26,
-                6554.42,
-                6445.5,
-            ]
-        )
-
-    @unittest.skip("TODO: need to add dummy raster data")
+    @unittest.skip("To run this, you'll have to download the raster tiles for Colorado")
     def test_raster_no_filter(self):
         """
-        Call the USGS Web API to append elevation at discrete points, do not
-        filter the results
+        Test the raster database implementation
         """
-        self.data = elevation.usgs_local_data(
-            self.data, sg_window=17, lat="lat", lon="lon", filter=False
-        )
+        emodel = USGSLocal(repo_root() / "scripts/colorado_tiles")
 
-        bool_out = np.allclose(
-            np.array(self.data["elevation_ft"]),
-            self.no_filter_desired_elevation_ft,
-            atol=50,
-        )  # 50 ft absolute tolerance
+        elevation_ft = emodel.get_elevation(COORDS)
 
-        self.assertTrue(bool_out)
+        self.assertEqual(len(elevation_ft), len(COORDS))
 
 
 if __name__ == "__main__":

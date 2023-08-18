@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import rasterio as rio
@@ -15,10 +15,10 @@ class USGSLocal(ElevationModel):
     containing the USGS 1/3 arc-second Digital Elevation Model.
     """
 
-    usgs_db_path: str
+    usgs_db_path: Path
 
-    def __init__(self, usgs_db_path: str):
-        self.usgs_db_path = usgs_db_path
+    def __init__(self, usgs_db_path: Union[Path, str]):
+        self.usgs_db_path = Path(usgs_db_path)
 
     def get_elevation(self, trace: List[Coordinate]) -> List[float]:
         elevation = get_raster_elev_profile(trace, self.usgs_db_path)
