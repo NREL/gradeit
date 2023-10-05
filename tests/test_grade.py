@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from gradeit import grade
+from gradeit.coordinate import Coordinate
 
 
 class GradeTest(unittest.TestCase):
@@ -12,6 +13,9 @@ class GradeTest(unittest.TestCase):
         self.lat2 = 39.695368
         self.lon1 = -105.245678
         self.lon2 = -105.209049
+
+        self.coord1 = Coordinate.from_lat_lon(self.lat1, self.lon1)
+        self.coord2 = Coordinate.from_lat_lon(self.lat2, self.lon2)
 
         self.expected_dist_km = 3.665130
         self.expected_bearing_deg = 104.63
@@ -61,41 +65,27 @@ class GradeTest(unittest.TestCase):
             -0.0815,
         ]
 
-    def test_haversine_no_bearing(self):
-        dist = grade.haversine(
-            self.lat1, self.lon1, self.lat2, self.lon2, get_bearing=False
-        )
+    def test_haversine(self):
+        dist = grade.haversine(self.coord1, self.coord2)
 
         self.assertEqual(dist, self.expected_dist_km)
 
-    def test_haversine_with_bearing(self):
-        dist, bearing = grade.haversine(
-            self.lat1, self.lon1, self.lat2, self.lon2, get_bearing=True
-        )
-
-        self.assertEqual(bearing, self.expected_bearing_deg)
-
     def test_get_distances(self):
-        coordinates = list(zip(self.data.lat, self.data.lon))
+        coordinates = [
+            Coordinate.from_lat_lon(lat, lon)
+            for lat, lon in zip(self.data.lat.values, self.data.lon.values)
+        ]
         dist_arr = grade.get_distances(coordinates)
 
-        np.testing.assert_array_equal(
-            dist_arr, np.array(self.data.dist_ft[1:])
-        )
+        np.testing.assert_array_equal(dist_arr, np.array(self.data.dist_ft[1:]))
 
-    def test_get_grade_from_coords(self):
-        coordinates = list(zip(self.data.lat, self.data.lon))
-        dist_arr, grade_arr = grade.get_grade(
-            self.data.elev_ft, coordinates=coordinates
-        )
-
-        np.testing.assert_array_equal(dist_arr, self.data.dist_ft[1:])
-        np.testing.assert_array_equal(grade_arr, self.data.grade_dec)
-
-    def test_get_grade_from_dist(self):
-        dist_arr, grade_arr = grade.get_grade(
-            self.data.elev_ft, distances=np.array(self.data.dist_ft[1:])
-        )
+    def test_get_grade_from_distance(self):
+        coordinates = [
+            Coordinate.from_lat_lon(lat, lon)
+            for lat, lon in zip(self.data.lat.values, self.data.lon.values)
+        ]
+        dist_arr = grade.get_distances(coordinates)
+        grade_arr = grade.get_grade(self.data.elev_ft, distances=dist_arr)
 
         np.testing.assert_array_equal(dist_arr, self.data.dist_ft[1:])
         np.testing.assert_array_equal(grade_arr, self.data.grade_dec)

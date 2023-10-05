@@ -1,11 +1,48 @@
+[build-system]
+requires = ["setuptools>=63.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gradeit"
+version = "0.1.2"
+description = "Road Grade Inference Tool (GradeIT) appends elevation and road grade to a sequence of GPS points."
+readme = "README.md"
+authors = [{ name = "National Renewable Energy Laboratory" }]
+license = { text = "BSD 3-Clause License Copyright (c) 2020, Alliance for Sustainable Energy, LLC" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Scientific/Engineering",
+]
+keywords = ["gps", "elevation", "road grade"]
+dependencies = [
+    "numpy",
+    "pandas",
+    "requests",
+    "rasterio",
+    "scipy",
+    "tqdm",
+    "shapely",
+]
+
+requires-python = ">=3.8"
+[project.optional-dependencies]
+plot = ["matplotlib"]
+dev = ["black", "ruff", "mypy", "pytest", "types-requests"]
+
+
+[project.urls]
+Homepage = "https://github.com/NREL/gradeit"
+
 [tool.black]
-line-length = 79
-target-version = ['py38', 'py39', 'py310']
+line-length = 100
 
-[tool.isort]
-profile = "black"
-line_length = 79
-skip_gitignore = true
-filter_files = true
+[tool.ruff]
+line-length = 100
 
-
+[tool.setuptools.package-data]
+"*" = ["py.typed"]

@@ -1,59 +1,87 @@
-from gradeit import elevation, grade
+from pathlib import Path
+from typing import Optional, Union
+import pandas as pd
+from gradeit.elevation.elevation_model import ElevationModel
+
+from gradeit.elevation.filtering import elevation_filter
+from gradeit.elevation.usgs_local import USGSLocal
+from gradeit.elevation.usgs_api import USGSApi
+from gradeit.coordinate import Coordinate
+from gradeit.grade import get_distances, get_grade
 
 
 def gradeit(
-    df=None,
-    lat_col="lat",
-    lon_col="lon",
-    filtering=False,
-    source="usgs-api",
-    usgs_db_path="/backup/mbap_shared/NED_13/",
-    des_sg=17,
-):
-    coordinates = list(zip(df[lat_col], df[lon_col]))
+    df: pd.DataFrame,
+    lat_col: str = "latitude",
+    lon_col: str = "longitude",
+    filtering: bool = False,
+    source: str = "usgs-api",
+    usgs_db_path: Optional[Union[str, Path]] = None,
+    des_sg: int = 17,
+) -> pd.DataFrame:
+    """
+    Add grade to an input dataframe with latitude and longitude columns
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        dataframe with latitude and longitude columns
+    lat_col : str, optional
+        name of the latitude column, by default "latitude"
+    lon_col : str, optional
+        name of the longitude column, by default "longitude"
+    filtering : bool, optional
+        whether to filter the elevation data, by default False
+    source : str, optional
+        data source for elevation data, by default "usgs-api"
+    usgs_db_path : Optional[Union[str, Path]], optional
+        path to local USGS raster tiles, by default None
+    des_sg : int, optional
+        Savitzky-Golay filter window size, by default 17
+
+    Returns
+    -------
+    pd.DataFrame
+        dataframe with grade columns appended
+    """
+    lats = df[lat_col].values
+    lons = df[lon_col].values
+
+    coordinates = [Coordinate.from_lat_lon(lat, lon) for lat, lon in zip(lats, lons)]
+
+    emodel: ElevationModel
 
     # Run the appropriate elevation function based on user's desired data source
     if source == "usgs-api":
-        df = elevation.usgs_api(
-            df,
-            lat=lat_col,
-            lon=lon_col,
-            apply_filter=filtering,
-            sg_window=des_sg,
-        )
-
+        emodel = USGSApi()
     elif source == "usgs-local":
-        df = elevation.usgs_local_data(
-            df,
-            usgs_db_path=usgs_db_path,
-            lat=lat_col,
-            lon=lon_col,
-            filter=filtering,
-            sg_window=des_sg,
-        )
-
+        if usgs_db_path is None:
+            raise Exception(
+                "You must provide a path to the local USGS raster tiles if you want"
+                "to use the 'usgs-local' option"
+            )
+        usgs_db_path = Path(usgs_db_path)
+        emodel = USGSLocal(usgs_db_path)
     else:
         raise Exception(
             "Invalid elevation data source. Provide one of these options: ['usgs-api','usgs-local']"
         )
 
-    # Cases where filtering is desired return both filtered and unfiltered results
-    # Select the filtered elevation data for grade derivation
-    if filtering:
-        elev_arr_filtered = df["elevation_ft_filtered"].values
-        distance_ft_filtered, grade_dec_filtered = grade.get_grade(
-            elev_arr_filtered, coordinates=coordinates
-        )
-        df["grade_dec_filtered"] = grade_dec_filtered
-        df["distance_ft_filtered"] = [0] + list(distance_ft_filtered)
-    # Have the unfiltered grade anyways for comparison
-    elev_arr_unfiltered = df["elevation_ft"].values
-    distance_ft_unfiltered, grade_dec_unfiltered = grade.get_grade(
-        elev_arr_unfiltered, coordinates=coordinates
-    )
-    df["distance_ft_unfiltered"] = [0] + list(distance_ft_unfiltered)
+    elevation_ft = emodel.get_elevation(coordinates)
+    df["elevation_ft"] = elevation_ft
+
+    distances_ft = get_distances(coordinates)
+    df["distances_ft"] = [0] + distances_ft
+
+    grade_dec_unfiltered = get_grade(elevation_ft, distances=distances_ft)
     df["grade_dec_unfiltered"] = grade_dec_unfiltered
 
-    # df['cumulative_distance_ft'] = np.cumsum(df['distance_ft']) #added: 06/15
+    if filtering:
+        elevation_ft_filtered = elevation_filter(
+            elevation_profile=elevation_ft, coordinates=coordinates, sg_window=des_sg
+        )
+        df["elevation_ft_filtered"] = elevation_ft_filtered
+        grade_dec_filtered = get_grade(elevation_ft_filtered, distances=distances_ft)
+        df["grade_dec_filtered"] = grade_dec_filtered
 
     return df

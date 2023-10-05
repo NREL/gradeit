@@ -1,72 +1,63 @@
-from math import asin, atan2, cos, degrees, radians, sin, sqrt
+from math import asin, cos, radians, sin, sqrt
+from typing import List
 
 import numpy as np
 
+from gradeit.coordinate import Coordinate
 
-def get_grade(elev_ft_arr, coordinates=None, distances=None):
-    # TODO: make units in %/100
 
+def get_grade(elevation_profile: List[float], distances: List[float]) -> List[float]:
     # check that n > 1
-    if len(elev_ft_arr) < 2:
+    if len(elevation_profile) < 2:
         raise ValueError(
             "Determining grade requires at least 2 coordinates\n\t\ti.e. Input size of n > 1"
         )
 
-    # if neither distance or coordinates are provided raise an exception
-    if coordinates is None and distances is None:
-        raise Exception(
-            "Either distance or coordinates must be provided to the get_grade() function."
-        )
-
-    # if only coordinates are provided, calculate the distance array
-    if coordinates is not None and distances is None:
-        distances = get_distances(coordinates)
-
-    d_dist = distances  # distances is an iterable of distances in feet
-    d_elev = np.diff(elev_ft_arr)
-    grade = d_elev / d_dist
+    d_elev = np.diff(elevation_profile)
+    grade = d_elev / distances
     grade = np.insert(grade, 0, 0)
     grade = np.round(grade, decimals=4)
     for a in range(len(grade) - 1):
         if np.isinf(grade[a + 1]) or np.isnan(grade[a + 1]):
             grade[a + 1] = grade[a]
 
-    return d_dist, grade
+    return list(grade)
 
 
-def get_distances(coordinates):
+def get_distances(coordinates: List[Coordinate]) -> List[float]:
+    """
+    Compute the distance between each coordinate pair
+    """
     FT_PER_KM = 3280.84
     # place a zero up front
     distances = []
     i = 1
     while i < len(coordinates):
-        lat1 = coordinates[i - 1][0]
-        lon1 = coordinates[i - 1][1]
-        lat2 = coordinates[i][0]
-        lon2 = coordinates[i][1]
-        dist_ft = haversine(lat1, lon1, lat2, lon2) * FT_PER_KM
+        dist_ft = haversine(coordinates[i - 1], coordinates[i]) * FT_PER_KM
         distances += [dist_ft]
         i += 1
 
     return distances
 
 
-def haversine(lat1, lon1, lat2, lon2, get_bearing=False):
+def haversine(coord1: Coordinate, coord2: Coordinate, get_bearing: bool = False) -> float:
     """
     Calculates the great circle distance and bearing (if requested)
     between two points on the earth's surface
 
-    args: lat1, lon1, lat2, lon2
-        The arguments are latitude and longitude (in degree decimal format)
-        coordinates
+    Parameters:
+        coord1: a Coordinate object
+        coord2: a Coordinate object
 
-    kwargs: get_bearing
-        False by default, when set to True, haversine returns bearing as well
+    Returns:
+        distance: the great circle distance in km
 
-    returns: distance in kilometers, bearing (if requested)
     """
     # convert decimal to radians
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    lat1 = radians(coord1.latitude)
+    lon1 = radians(coord1.longitude)
+    lat2 = radians(coord2.latitude)
+    lon2 = radians(coord2.longitude)
 
     # compute haversine result
     dlat = lat2 - lat1
@@ -78,16 +69,4 @@ def haversine(lat1, lon1, lat2, lon2, get_bearing=False):
     # round to centimeter precision
     distance = round(distance, 5)
 
-    # compute bearing if requested
-    if get_bearing:
-        atan_arg1 = sin(dlon) * cos(lat2)
-        atan_arg2 = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dlon)
-        bearing = degrees(atan2(atan_arg1, atan_arg2))
-        bearing = (bearing + 360) % 360
-        # round to hundredth of degree precision
-        bearing = round(bearing, 2)
-
-        return distance, bearing
-
-    else:
-        return distance
+    return distance
