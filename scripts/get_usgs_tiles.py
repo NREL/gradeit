@@ -28,7 +28,11 @@ def download_file(tile: str):
         return
 
     with requests.get(url, stream=True) as r:
-        r.raise_for_status()
+        try:
+            r.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            print(f"error downloading {url}: {e}")
+            return
 
         destination.parent.mkdir(parents=True, exist_ok=True)
 
