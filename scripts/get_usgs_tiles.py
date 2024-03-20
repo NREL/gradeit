@@ -26,7 +26,7 @@ def download_file(tile: str):
     if destination.is_file():
         print(f"{str(destination)} already exists, skipping")
         return
-    
+
     print(f"downloading {url} to {str(destination)}")
 
     with requests.get(url, stream=True) as r:
