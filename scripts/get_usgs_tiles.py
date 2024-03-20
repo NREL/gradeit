@@ -1,5 +1,5 @@
 from pathlib import Path
-from mpire import WorkerPool
+from multiprocessing import Pool
 
 import os
 
@@ -26,6 +26,8 @@ def download_file(tile: str):
     if destination.is_file():
         print(f"{str(destination)} already exists, skipping")
         return
+    
+    print(f"downloading {url} to {str(destination)}")
 
     with requests.get(url, stream=True) as r:
         try:
@@ -48,8 +50,8 @@ def run():
 
     print("downloading tiles..")
 
-    with WorkerPool(NPROCS) as p:
-        p.map(download_file, tiles, progress_bar=True)
+    with Pool(NPROCS) as p:
+        p.map(download_file, tiles)
 
 
 if __name__ == "__main__":
