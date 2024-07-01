@@ -15,7 +15,7 @@ model, which provides much faster results.
 
 Clone or download the git repository.
 
-```git clone https://github.com/NREL/gradeit.git```
+`git clone https://github.com/NREL/gradeit.git`
 
 gradeit depends on python 3.8 and up. One way to satisfy this is to use conda:
 
@@ -28,29 +28,28 @@ This will create a new conda environment that uses python 3.8.
 
 Then, you can install the gradeit library
 
-```pip install gradeit```
+`pip install gradeit`
 
 or if you're already in the gradeit root directory then:
 
-```pip install .```
+`pip install .`
 
 ## Getting Started
 
-In this repository, `docs/demo.py` will demonstrate the most basic application of the gradeit package. Additionally, the [gradeit-notebooks](https://github.com/NREL/gradeit-notebooks) repo contains various Jupyter notebooks that demonstrate gradeit applications and explore potential improvements.
+In this repository, `examples/basic.py` will demonstrate basic application of the gradeit package.
 
 ## USGS Elevation Data
 
-The United States Geological Survey offers a variety of products as a part of the [National Map](https://www.usgs.gov/core-science-systems/national-geospatial-program/national-map) project, including bare-earth elevation datasets. The 1/3 arc-second elevation dataset is continuous for the coterminous United States and is therefore used in GradeIT. As shown in ```docs/demo.ipynb``` appending elevation and grade to 1000+ points benefits significantly from having a local or network copy of the required USGS elevation data.
+The United States Geological Survey offers a variety of products as a part of the [National Map](https://www.usgs.gov/core-science-systems/national-geospatial-program/national-map) project, including bare-earth elevation datasets. The 1/3 arc-second elevation dataset is continuous for the coterminous United States and is therefore used in GradeIT. Appending elevation and grade to 1000+ points benefits significantly from having a local or network copy of the required USGS elevation data.
 
 NREL has the 1/3 arc-second raster data downloaded to on-site compute resources for large scale needs. Individual users can access the same raster data [here](https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/13/TIFF/current/).
 
 ### Download Script
 
-This repository comes with a script you can use to download all of the tiles. You can use the script like this:
+This repository comes with a script you can use to download USGS tiles yourself. You can use the script like this:
 
 ```bash
-export OUTPUT_DIR=path/to/output/
-python scripts/get_usgs_tiles.py
+python scripts/get_usgs_tiles.py --output-dir path/to/output/
 ```
 
 The script will then proceed to download all tiles into `path/to/output/` which can be used when running gradeit:
@@ -61,6 +60,14 @@ results = gradeit(
     source="usgs-local",
     usgs_db_path="path/to/output/",
 )
+```
+
+You can also use the script to just download a subset of tiles.
+
+This example would use the `scripts/colorado_tiles.txt` file to just download raster tiles that cover the state of colorado:
+
+```console
+python get_usgs_tiles.py --output-dir colorado_tiles/ --tile-data colorado_tiles.txt --nprocs 8
 ```
 
 ## Filters

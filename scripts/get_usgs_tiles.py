@@ -1,18 +1,39 @@
 from pathlib import Path
 from multiprocessing import Pool
 
-import os
+import argparse
+import logging
 
 import requests
 
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+parser = argparse.ArgumentParser(description="Download USGS 1/3 arc-second DEM tiles")
+
+parser.add_argument(
+    "--tile-data",
+    type=str,
+    default="usgs_tiles.txt",
+    help="File containing list of tiles to download",
+)
+
+parser.add_argument(
+    "--output-dir",
+    type=str,
+    default="usgs_tiles",
+    help="Directory to save downloaded tiles",
+)
+
+parser.add_argument(
+    "--nprocs",
+    type=int,
+    default=4,
+    help="Number of processes to use for downloading",
+)
+
 
 LINK_BASE = "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/current"
-OUTPUT_DIR = Path(os.environ.get("OUTPUT_DIR", "usgs_tiles"))
-TILE_DATA = Path(os.environ.get("TILE_DATA", "usgs_tiles.txt"))
-NPROCS = int(os.environ.get("NPROCS", 4))
-
-if not OUTPUT_DIR.exists():
-    OUTPUT_DIR.mkdir(parents=True)
 
 
 def build_link(tile: str) -> str:
@@ -20,9 +41,9 @@ def build_link(tile: str) -> str:
     return link
 
 
-def download_file(tile: str):
+def download_file(tile: str, output_dir: Path):
     url = build_link(tile)
-    destination = OUTPUT_DIR / f"{tile}" / f"USGS_13_{tile}.tif"
+    destination = output_dir / f"{tile}" / f"USGS_13_{tile}.tif"
     if destination.is_file():
         print(f"{str(destination)} already exists, skipping")
         return
@@ -45,12 +66,19 @@ def download_file(tile: str):
 
 
 def run():
-    with TILE_DATA.open("r") as f:
+    args = parser.parse_args()
+    output_dir = Path(args.output_dir)
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True)
+
+    tile_data_file = Path(args.tile_data)
+
+    with tile_data_file.open("r") as f:
         tiles = [line.strip() for line in f.readlines()]
 
-    print("downloading tiles..")
+    log.info(f"downloading {len(tiles)} tiles..")
 
-    with Pool(NPROCS) as p:
+    with Pool(args.nprocs) as p:
         p.map(download_file, tiles)
 
 
