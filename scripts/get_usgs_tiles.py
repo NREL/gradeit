@@ -45,16 +45,14 @@ def download_file(tile: str, output_dir: Path):
     url = build_link(tile)
     destination = output_dir / f"{tile}" / f"USGS_13_{tile}.tif"
     if destination.is_file():
-        print(f"{str(destination)} already exists, skipping")
+        log.info(f"{str(destination)} already exists, skipping")
         return
-
-    print(f"downloading {url} to {str(destination)}")
 
     with requests.get(url, stream=True) as r:
         try:
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            print(f"error downloading {url}: {e}")
+            log.error(f"error downloading {url}: {e}")
             return
 
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -63,6 +61,8 @@ def download_file(tile: str, output_dir: Path):
         with destination.open("wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
+
+    log.info(f"downloaded {url} to {str(destination)}")
 
 
 def run():
@@ -79,7 +79,7 @@ def run():
     log.info(f"downloading {len(tiles)} tiles..")
 
     with Pool(args.nprocs) as p:
-        p.map(download_file, tiles)
+        p.starmap(download_file, [(tile, output_dir) for tile in tiles])
 
 
 if __name__ == "__main__":
